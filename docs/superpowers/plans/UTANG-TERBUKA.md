@@ -2,7 +2,9 @@
 
 Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fase sebelum utang yang jatuh tempo di fase itu lunas.
 
-## U-1 — Produksi masih menunjuk database dev  🔴 MEMBLOKIR FASE 1
+## U-1 — Produksi masih menunjuk database dev  🔴 MEMBLOKIR FASE 1b
+
+**Koreksi tenggat (2026-08-17).** Semula ditulis memblokir seluruh Fase 1. Setelah ditinjau ulang, tenggat yang benar adalah **sebelum Fase 1b**, bukan sebelum migrasi Fase 1a. Alasannya konkret: sampai Fase 1b, aplikasi belum melakukan satu pun query ke tabel — produksi hanya menyajikan halaman placeholder dan `/api/health`. Membuat tabel dan seed di dev karena itu tidak membuat produksi menyajikan apa pun yang salah. Yang berbahaya adalah **merender** dari database, dan itu terjadi di 1b.
 
 **Keadaan:** environment `production` dan `preview` di Vercel sama-sama memakai kredensial proyek Supabase **dev** (`sgxepblrfqwbhhpmvaxm`), karena proyek `portofolio-prod` belum dibuat saat Fase 0 ditutup.
 
