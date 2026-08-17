@@ -126,14 +126,14 @@ on conflict do nothing;
 
 insert into public.education (institution, degree, year, sort_order, status) values
   ('Universitas', '{"id":"S1 Teknik Informatika","en":"B.Sc. Informatics"}', 2019, 1, 'published'),
-  ('Draft', '{"id":"Draft","en":"Draft"}', 2015, 99, 'draft')
+  ('Institusi Draft Tak Tayang', '{"id":"Draft","en":"Draft"}', 2015, 99, 'draft')
 on conflict do nothing;
 
 insert into public.testimonials (quote, author_name, author_role, author_company,
   sort_order, status) values
   ('{"id":"Konsisten menemukan edge case yang terlewat tim lain.","en":"Consistently finds edge cases the rest of the team misses."}',
    'Rekan Kerja', '{"id":"Engineering Lead","en":"Engineering Lead"}', null, 1, 'published'),
-  ('{"id":"Draft.","en":"Draft."}', 'Draft', '{"id":"Draft","en":"Draft"}', null, 99, 'draft')
+  ('{"id":"Draft.","en":"Draft."}', 'Penulis Draft Tak Tayang', '{"id":"Draft","en":"Draft"}', null, 99, 'draft')
 on conflict do nothing;
 
 -- analytics_events sengaja diberi isi meski penulisannya baru dibangun di Fase 3.
