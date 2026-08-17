@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Nav } from '@/components/layout/Nav'
+import { About } from '@/components/sections/About'
+import { Coverage } from '@/components/sections/Coverage'
 import { Hero } from '@/components/sections/Hero'
 import { TrustStrip } from '@/components/sections/TrustStrip'
 import { getPageContent } from '@/lib/content/get-page-content'
@@ -20,6 +22,8 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
       <main className="flex-1">
         <Hero hero={konten.hero} locale={locale} />
         <TrustStrip tools={konten.tools} locale={locale} />
+        <About about={konten.about} locale={locale} />
+        <Coverage skillCategories={konten.skillCategories} locale={locale} />
       </main>
       <Footer settings={konten.siteSettings} locale={locale} />
     </>

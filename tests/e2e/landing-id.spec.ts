@@ -28,4 +28,24 @@ test.describe('/id — konten dari database', () => {
       expect(isi).toContain(tool)
     }
   })
+
+  test('About menampilkan badge highlight dan about_richtext berbahasa Indonesia', async ({
+    page,
+  }) => {
+    const isi = await page.locator('body').innerText()
+
+    expect(isi).toContain('Manual & Automation')
+    expect(isi).toContain('Quality bukan cuma mencari bug')
+  })
+
+  test('Coverage menampilkan kategori dan skill dengan persentasenya', async ({ page }) => {
+    const isi = await page.locator('body').innerText()
+
+    for (const kategori of ['Manual Testing', 'Automation Testing']) {
+      expect(isi).toContain(kategori)
+    }
+
+    expect(isi).toContain('Test Case Design')
+    expect(isi).toContain('90%')
+  })
 })

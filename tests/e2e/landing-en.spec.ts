@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 // Padanan tests/e2e/landing-id.spec.ts untuk /en — nilai seed yang bilingual
 // sengaja diisi identik di kolom id/en (lihat supabase/seed.sql), jadi
 // assertion di sini sama; yang membedakan i18n sungguh bekerja diuji lewat
-// field yang isinya sengaja berbeda (ditambahkan bersama section About).
+// about_richtext, satu-satunya field seed yang isinya sengaja berbeda.
 test.describe('/en — konten dari database', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/en')
@@ -29,5 +29,25 @@ test.describe('/en — konten dari database', () => {
     for (const tool of ['Playwright', 'Postman', 'k6']) {
       expect(isi).toContain(tool)
     }
+  })
+
+  test('About menampilkan badge highlight dan about_richtext berbahasa Inggris', async ({
+    page,
+  }) => {
+    const isi = await page.locator('body').innerText()
+
+    expect(isi).toContain('Manual & Automation')
+    expect(isi).toContain('Quality is not just finding bugs')
+  })
+
+  test('Coverage menampilkan kategori dan skill dengan persentasenya', async ({ page }) => {
+    const isi = await page.locator('body').innerText()
+
+    for (const kategori of ['Manual Testing', 'Automation Testing']) {
+      expect(isi).toContain(kategori)
+    }
+
+    expect(isi).toContain('Test Case Design')
+    expect(isi).toContain('90%')
   })
 })
