@@ -115,9 +115,13 @@ insert into public.experiences (company, role, period_start, period_end, locatio
    '2020-01-01', '2021-12-31', 'Indonesia', '[]'::jsonb, '[]'::jsonb, 99, 'draft')
 on conflict do nothing;
 
-insert into public.certifications (name, issuer, year, sort_order, status) values
-  ('ISTQB Foundation Level', 'ISTQB', 2022, 1, 'published'),
-  ('Sertifikat Draft', 'Draft', 2020, 99, 'draft')
+-- Satu sertifikat sengaja diberi credential_url dan satu lagi tidak: tanpa
+-- keduanya, cabang 'kartu dibungkus tautan' atau cabang 'kartu polos' pasti ada
+-- yang tak pernah tereksekusi test mana pun.
+insert into public.certifications (name, issuer, year, credential_url, sort_order, status) values
+  ('ISTQB Foundation Level', 'ISTQB', 2022, 'https://example.com/kredensial/istqb-fl', 1, 'published'),
+  ('Certified Tester Agile', 'ISTQB', 2023, null, 2, 'published'),
+  ('Sertifikat Draft', 'Draft', 2020, null, 99, 'draft')
 on conflict do nothing;
 
 insert into public.education (institution, degree, year, sort_order, status) values
