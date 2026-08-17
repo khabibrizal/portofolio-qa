@@ -37,6 +37,88 @@ test.describe('Automation Lab — replay interaktif', () => {
   })
 })
 
+test.describe('Automation Lab — perpindahan tab', () => {
+  test('berpindah tab menampilkan skenario lain, bukan skenario yang sama', async ({ page }) => {
+    await page.goto('/id')
+
+    const lab = page.locator('#automation-lab')
+    const tabPlaywright = lab.getByRole('tab', { name: 'Playwright' })
+    const tabK6 = lab.getByRole('tab', { name: 'k6' })
+
+    await expect(tabPlaywright).toHaveAttribute('aria-selected', 'true')
+    await expect(lab.getByRole('tabpanel')).toContainText('Login & Checkout End-to-End')
+
+    await tabK6.click()
+    await expect(tabK6).toHaveAttribute('aria-selected', 'true')
+    await expect(tabPlaywright).toHaveAttribute('aria-selected', 'false')
+    await expect(lab.getByRole('tabpanel')).toContainText('Uji Beban Endpoint Pencarian')
+    await expect(lab.getByRole('tabpanel')).not.toContainText('Login & Checkout End-to-End')
+  })
+
+  test('tautan report lengkap hanya muncul pada skenario yang punya URL', async ({ page }) => {
+    await page.goto('/id')
+
+    const lab = page.locator('#automation-lab')
+    const panel = lab.getByRole('tabpanel')
+
+    // Skenario pertama di seed sengaja tidak punya full_report_url — cabang
+    // penjaga null-nya harus benar-benar menyembunyikan tautannya.
+    await panel.getByRole('button').click()
+    await expect(panel.getByText('4.1s')).toBeVisible({ timeout: 10_000 })
+    await expect(panel.getByRole('link')).toHaveCount(0)
+
+    // Skenario kedua punya URL, jadi tautannya wajib ada setelah report muncul.
+    await lab.getByRole('tab', { name: 'k6' }).click()
+    await panel.getByRole('button').click()
+    await expect(panel.getByText('1.4s')).toBeVisible({ timeout: 10_000 })
+    await expect(panel.getByRole('link')).toHaveAttribute(
+      'href',
+      'https://example.com/laporan/uji-beban-pencarian',
+    )
+  })
+
+  test('berpindah tab di tengah replay tidak meninggalkan indikator yang membeku', async ({
+    page,
+  }) => {
+    const errorKonsol: string[] = []
+    page.on('pageerror', (e) => errorKonsol.push(e.message))
+
+    await page.goto('/id')
+
+    const lab = page.locator('#automation-lab')
+    const panel = lab.getByRole('tabpanel')
+
+    // Mulai replay lalu pindah tab SEBELUM selesai (total langkah 850+600ms).
+    await panel.getByRole('button').click()
+    await lab.getByRole('tab', { name: 'k6' }).click()
+
+    // Skenario kedua harus tampil dalam keadaan idle — bukan mewarisi keadaan
+    // "berjalan" dari skenario yang ditinggalkan.
+    await expect(panel.getByRole('button')).toHaveText('Jalankan Test')
+
+    // Penantian buta yang DISENGAJA, dan satu-satunya di suite ini.
+    // Yang dibuktikan adalah KETIADAAN kejadian: kalau timer skenario pertama
+    // tidak dibersihkan saat tab berganti, ia terus menembak di latar dan
+    // menuntaskan replay yang sudah ditinggalkan. Memeriksa keadaan segera
+    // setelah pindah tab tidak bisa menangkap itu — jendela timer basinya
+    // belum terlewati. Jadi kita lewati dulu jendela itu (850+600ms), baru
+    // periksa. Versi pertama test ini lulus meski pembersihan timer dihapus;
+    // dibuktikan lewat mutasi.
+    await page.waitForTimeout(2_500)
+
+    await lab.getByRole('tab', { name: 'Playwright' }).click()
+
+    // Skenario pertama harus tetap idle: tidak pernah lanjut sendiri, dan
+    // report-nya tidak boleh muncul tanpa ada yang menekan tombolnya.
+    await expect(panel.getByRole('button')).toHaveText('Jalankan Test')
+    await expect(panel.getByText('4.1s')).toHaveCount(0)
+
+    // Timer yang menembak setelah tab berganti akan muncul sebagai error
+    // runtime; tidak boleh ada satu pun.
+    expect(errorKonsol, `error runtime muncul: ${errorKonsol.join('; ')}`).toEqual([])
+  })
+})
+
 test.describe('Automation Lab — aksesibilitas dasar', () => {
   test('tab Lab bisa dijangkau via Tab dan diaktifkan via Enter/Space, bukan hanya klik mouse', async ({
     page,

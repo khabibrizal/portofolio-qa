@@ -78,16 +78,30 @@ insert into public.case_studies (test_code, project_name, role, objective, tools
 on conflict (test_code) do nothing;
 
 insert into public.lab_scenarios (framework_name, scenario_title, scenario_description, tags,
-  steps, result_summary, sort_order, status) values
+  steps, result_summary, full_report_url, sort_order, status) values
   ('Playwright',
    '{"id":"Login & Checkout End-to-End","en":"End-to-End Login & Checkout"}',
    '{"id":"Login, tambah ke keranjang, checkout, verifikasi order.","en":"Log in, add to cart, check out, verify the order."}',
    '["TypeScript","Playwright"]'::jsonb,
    '[{"label":{"id":"Membuka halaman login","en":"Opening the login page"},"duration_ms":850,"status":"pass"},
      {"label":{"id":"Verifikasi order berhasil","en":"Verifying the order succeeded"},"duration_ms":600,"status":"pass"}]'::jsonb,
-   '{"total":6,"passed":6,"failed":0,"duration":"4.1s"}'::jsonb, 1, 'published'),
-  ('k6', '{"id":"Skenario Draft","en":"Draft Scenario"}',
-   '{"id":"Belum tayang.","en":"Not published yet."}', '[]'::jsonb, '[]'::jsonb, null, 99, 'draft')
+   '{"total":6,"passed":6,"failed":0,"duration":"4.1s"}'::jsonb, null, 1, 'published'),
+  -- Skenario published KEDUA, dan alasannya bukan variasi konten: dengan satu tab
+  -- saja, perpindahan tab dan pembersihan timer di tengah replay tidak bisa diuji
+  -- sama sekali, padahal itu logika paling rawan di Automation Lab. Baris ini juga
+  -- satu-satunya yang mengisi full_report_url, sehingga cabang tombol "Lihat Report
+  -- Lengkap" ikut tereksekusi — sebelumnya cabang itu tak pernah dijalankan.
+  ('k6',
+   '{"id":"Uji Beban Endpoint Pencarian","en":"Search Endpoint Load Test"}',
+   '{"id":"Menaikkan beban bertahap sampai 200 pengguna serentak sambil memantau p95.","en":"Ramping load to 200 concurrent users while watching p95."}',
+   '["JavaScript","k6"]'::jsonb,
+   '[{"label":{"id":"Menyiapkan skenario ramping","en":"Preparing the ramping scenario"},"duration_ms":400,"status":"pass"},
+     {"label":{"id":"Menaikkan beban ke 200 VU","en":"Ramping load to 200 VUs"},"duration_ms":500,"status":"pass"},
+     {"label":{"id":"Verifikasi ambang p95 terpenuhi","en":"Verifying the p95 threshold holds"},"duration_ms":450,"status":"pass"}]'::jsonb,
+   '{"total":3,"passed":3,"failed":0,"duration":"1.4s"}'::jsonb,
+   'https://example.com/laporan/uji-beban-pencarian', 2, 'published'),
+  ('Appium', '{"id":"Skenario Draft","en":"Draft Scenario"}',
+   '{"id":"Belum tayang.","en":"Not published yet."}', '[]'::jsonb, '[]'::jsonb, null, null, 99, 'draft')
 on conflict do nothing;
 
 insert into public.experiences (company, role, period_start, period_end, location,
