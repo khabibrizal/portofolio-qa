@@ -705,6 +705,19 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
 
 `revalidate = 300` inilah tulang punggung degradasi: halaman disajikan sebagai HTML statis yang sudah jadi, dan bila revalidasi gagal karena database bermasalah, Next tetap menyajikan render terakhir yang berhasil.
 
+**Koreksi penting yang ditemukan saat eksekusi.** `revalidate` saja **tidak cukup**. Versi pertama memakai `createClient()` dari `src/lib/supabase/server.ts`, yang membaca cookie — dan membaca cookie membuat halaman menjadi dinamis, sehingga Next merendernya ulang tiap permintaan dan `revalidate` tidak pernah berlaku. Output build menunjukkannya terang-terangan: `ƒ /[locale]`, bukan `●`. Artinya seluruh strategi degradasi fase ini sebenarnya mati tanpa disadari.
+
+Perbaikannya memisahkan dua klien sesuai kebutuhan sesungguhnya:
+
+| Klien | Berkas | Dipakai oleh | Kenapa |
+|---|---|---|---|
+| Anonim, tanpa cookie | `src/lib/supabase/public.ts` | Query konten landing | Landing selalu anonim dan menampilkan hal yang sama untuk semua orang, sehingga halamannya bisa di-prerender |
+| Berbasis cookie | `src/lib/supabase/server.ts` | Admin (Fase 2) | Di sana sesi memang menentukan apa yang boleh dilihat |
+
+Setelah dipisah, build melaporkan `● /id` dan `● /en` — ter-prerender, dan degradasi benar-benar berlaku.
+
+Pelajaran yang berlaku umum: **verifikasi degradasi dengan membaca output build, bukan dengan mengasumsikan direktif bekerja.** Satu impor yang membaca cookie di kedalaman mana pun sudah cukup mematikannya, tanpa error apa pun.
+
 - [ ] **Step 7: Hapus placeholder lama** — hapus isi lama `src/app/page.tsx` (sudah diganti di Step 4).
 
 - [ ] **Step 8:** `npm run build` lalu `npm run test:e2e` → seluruh test rute hijau.

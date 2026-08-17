@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import type {
   About, CaseStudy, Certification, Education, Experience, Hero,
   LabScenario, SiteSettings, SkillCategory, Testimonial, Tool,
@@ -13,7 +13,7 @@ import type {
  * yang menjamin klien anonim tak pernah menerima draft, dan itu yang diuji.
  */
 async function koleksi<T>(tabel: string, kolom: string): Promise<T[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from(tabel)
     .select(kolom)
@@ -25,7 +25,7 @@ async function koleksi<T>(tabel: string, kolom: string): Promise<T[]> {
 }
 
 async function singleton<T>(tabel: string, kolom: string): Promise<T | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase.from(tabel).select(kolom).eq('id', 1).maybeSingle()
 
   if (error) throw new Error(`Gagal memuat ${tabel}: ${error.message}`)
