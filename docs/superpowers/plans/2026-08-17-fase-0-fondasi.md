@@ -623,7 +623,7 @@ import { parseEnv } from '@/lib/env'
 
 const VALID = {
   NEXT_PUBLIC_SUPABASE_URL: 'https://contoh.supabase.co',
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'kunci-anon-contoh',
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'kunci-anon-contoh',
 }
 
 describe('parseEnv', () => {
@@ -640,7 +640,7 @@ describe('parseEnv', () => {
   })
 
   it('menolak ketika kunci anon kosong', () => {
-    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_SUPABASE_ANON_KEY: '' })).toThrow()
+    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: '' })).toThrow()
   })
 })
 ```
@@ -666,7 +666,7 @@ import { z } from 'zod'
 
 const skema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 })
 
 export type Env = z.infer<typeof skema>
@@ -675,7 +675,7 @@ export type Env = z.infer<typeof skema>
 export function parseEnv(sumber: Record<string, string | undefined>): Env {
   const hasil = skema.safeParse({
     NEXT_PUBLIC_SUPABASE_URL: sumber.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: sumber.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sumber.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   })
 
   if (!hasil.success) {
@@ -692,7 +692,7 @@ export function parseEnv(sumber: Record<string, string | undefined>): Env {
 // undefined begitu modul ini tersentuh dari sisi klien.
 export const env = parseEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 })
 ```
 
@@ -713,14 +713,14 @@ Buat `.env.example` (di-commit, tanpa nilai asli):
 ```dotenv
 # Supabase — ambil dari Project Settings → API
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
 Buat `.env.local` (TIDAK di-commit) berisi nilai asli dari proyek **`portofolio-dev`**:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=<URL portofolio-dev>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<kunci anon portofolio-dev>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<kunci anon portofolio-dev>
 ```
 
 - [ ] **Step 7: Buat klien Supabase sisi server**
@@ -736,7 +736,7 @@ import { env } from '@/lib/env'
 export async function createClient() {
   const cookieStore = await cookies()
 
-  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -789,7 +789,7 @@ CI menembak proyek `portofolio-dev`, jadi kredensialnya harus tersedia di runner
 ```powershell
 cd D:\portofolio-qa
 gh secret set NEXT_PUBLIC_SUPABASE_URL --body "<URL portofolio-dev>"
-gh secret set NEXT_PUBLIC_SUPABASE_ANON_KEY --body "<kunci anon portofolio-dev>"
+gh secret set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY --body "<kunci anon portofolio-dev>"
 gh secret list
 ```
 
@@ -817,13 +817,13 @@ jobs:
     timeout-minutes: 20
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Pasang dependensi
@@ -889,14 +889,14 @@ Produksi memakai kredensial **`portofolio-prod`**, bukan dev:
 
 ```powershell
 vercel env add NEXT_PUBLIC_SUPABASE_URL production
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY production
 ```
 
 Lalu untuk preview deploy, yang memakai **`portofolio-dev`**:
 
 ```powershell
 vercel env add NEXT_PUBLIC_SUPABASE_URL preview
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY preview
+vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY preview
 ```
 
 Pemisahan ini yang menjaga preview deploy tidak pernah menulis ke database produksi.
@@ -1004,6 +1004,11 @@ Dicatat agar rencana tidak berbeda pendapat dengan kode yang benar-benar ada.
 | 5 | Test cache `/api/health` hanya memeriksa header | Ditambah `expect(response.status()).toBe(200)` sebelum memeriksa header | Next.js menyertakan `no-store` pada 404 bawaannya, sehingga test semula lulus meski endpoint tidak ada. Diverifikasi lewat mutasi: dengan route disembunyikan kini 2 test gagal, sebelumnya hanya 1 |
 | 6 | Tidak disebut | `package.json` `name` diperbaiki dari `portofolio-qa-scaffold`, dan `CLAUDE.md` hasil scaffold diisi panduan proyek | Nama paket menyisakan nama direktori sementara; `CLAUDE.md` semula hanya berisi `@AGENTS.md` |
 | 7 | Tidak disebut | Riwayat git ditulis ulang sebelum push pertama | Spec & `CLAUDE.md` versi awal menyebut nama employer dan merinci isi materi internalnya. Repo ini publik, jadi sanitasi harus mencakup riwayat, bukan hanya working tree |
+| 8 | Variabel `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase memakai kunci publishable gaya baru (`sb_publishable_…`), bukan anon JWT yang ada di jalur deprecation. Menamainya "anon" padahal isinya bukan JWT anon menyesatkan pembaca berikutnya |
+| 9 | Validasi kunci hanya `z.string().min(1)` | Ditambah `.startsWith('sb_publishable_')` | Variabel `NEXT_PUBLIC_*` disulih ke bundel browser. Tanpa penjagaan ini, kunci `sb_secret_…` yang salah tempel akan terkirim ke setiap pengunjung. Diverifikasi: dengan kunci secret ditempel, `npm run test:unit` keluar dengan **exit 1** |
+| 10 | Klaim validasi memblokir `npm run build` | Yang memblokir adalah `npm run test:unit`, bukan `build` | Di Fase 0 belum ada modul reachable yang mengimpor `src/lib/env.ts`, sehingga Turbopack tidak pernah mengevaluasinya saat build. Gerbangnya tetap nyata karena `test:unit` mengimpor modul itu dan berjalan lebih dulu di CI. Blokir pada `build` baru berlaku sendirinya di Fase 1 saat `createClient()` benar-benar dipanggil halaman |
+| 11 | `vitest.config.mts` minimal | Ditambah `resolve.alias` `@`→`./src` dan `loadEnv` dari Vite | Vitest tidak membaca `paths` dari `tsconfig.json` dan tidak memuat `.env.local` seperti Next.js. Tanpa keduanya, `tests/unit/env.test.ts` mustahil lulus |
+| 12 | Node 20 di CI | Node 22 di CI | `@supabase/supabase-js` 2.112.x mendeklarasikan `engines.node >=22`; Node 20 memunculkan `EBADENGINE`. CI disamakan dengan runtime produksi Vercel. **Mesin dev masih Node 20.19.6** — jalan dengan peringatan; disarankan naik ke Node 22 LTS demi paritas |
 
 ## Catatan untuk perencanaan Fase 1
 
