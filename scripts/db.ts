@@ -53,17 +53,39 @@ function muatEnvLokal(): void {
   }
 }
 
+/**
+ * Menyusun connection string.
+ *
+ * Bentuk yang disarankan adalah tiga bagian terpisah (HOST/USER/PASSWORD), bukan
+ * satu URL utuh: password database kerap memuat karakter yang harus
+ * percent-encoded (`@`, `#`, `/`, `?`), dan menyerahkan itu ke manusia adalah
+ * sumber kegagalan yang menyamar sebagai "password salah". Di sini skrip yang
+ * meng-encode-nya.
+ *
+ * SUPABASE_DB_URL tetap didukung dan menang bila diisi, untuk kasus di mana
+ * string utuh datang dari luar (mis. secret CI).
+ */
 function connectionString(): string {
-  const url = process.env.SUPABASE_DB_URL
-  if (!url) {
+  const utuh = process.env.SUPABASE_DB_URL
+  if (utuh) return utuh
+
+  const host = process.env.SUPABASE_DB_HOST
+  const user = process.env.SUPABASE_DB_USER
+  const password = process.env.SUPABASE_DB_PASSWORD
+
+  if (!host || !user || !password) {
     throw new Error(
-      'SUPABASE_DB_URL belum diset.\n' +
-        'Ambil dari Supabase Dashboard → Connect → Session pooler ' +
-        '(BUKAN Direct connection maupun Transaction pooler), ' +
-        'lalu simpan di .env.local.',
+      'Koneksi database belum lengkap di .env.local.\n' +
+        'Isi ketiganya (password ditempel apa adanya, TANPA encoding manual):\n' +
+        '  SUPABASE_DB_HOST=aws-0-<region>.pooler.supabase.com\n' +
+        '  SUPABASE_DB_USER=postgres.<project-ref>\n' +
+        '  SUPABASE_DB_PASSWORD=...\n' +
+        'Ambil dari Supabase Dashboard → Connect. Pakai host pooler port 5432, ' +
+        'bukan direct connection (IPv6-only) dan bukan port 6543 (transaction mode).',
     )
   }
-  return url
+
+  return `postgresql://${user}:${encodeURIComponent(password)}@${host}:5432/postgres?sslmode=no-verify`
 }
 
 function bacaSeed(): string {
