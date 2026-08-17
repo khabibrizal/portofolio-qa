@@ -217,7 +217,7 @@ export function teks(nilai: LocalizedText | null | undefined, locale: Locale): s
 }
 ```
 
-- [ ] **Step 5:** `npm run test:unit` → LULUS (9 lama + 13 baru = 22).
+- [ ] **Step 5:** `npm run test:unit` → LULUS (9 lama + 9 baru = 18).
 - [ ] **Step 6: Commit** — `feat(i18n): locale, pemilih Accept-Language, resolver teks dwibahasa`
 
 ---
