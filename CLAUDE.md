@@ -40,6 +40,14 @@ Playwright menembak bundel **produksi** (`npm run build && npm start`), bukan se
 
 Test ditulis **bersama** fitur, bukan setelahnya.
 
+### Dua aturan yang lahir dari kesalahan nyata di proyek ini
+
+**Pastikan test bisa gagal.** Sudah empat kali ditemukan test hijau yang tidak membuktikan apa pun, semuanya berpola sama: datanya tidak memungkinkan pemeriksaan itu gagal. Header `no-store` yang juga ada di 404 bawaan; tabel `analytics_events` kosong sehingga "anon tak bisa baca" dan "tabelnya memang kosong" tak terbedakan; satu-satunya `lab_scenarios` sehingga perpindahan tab tak teruji; seluruh `credential_url` kosong sehingga cabang tautan tak pernah jalan. Karena itu **seed wajib memuat variasi**, bukan hanya data yang bagus — termasuk baris `draft` di setiap koleksi dan kolom nullable yang terisi di sebagian baris saja.
+
+Setelah menulis test yang langsung hijau, **rusak kodenya sengaja dan pastikan test itu merah**. Kalau tetap hijau, testnya belum menguji apa yang kamu kira.
+
+**Presence pakai asersi yang retry, absence pakai baca sekali.** `await expect(locator).toContainText('x')` mengulang sampai muncul; `const t = await locator.innerText()` membaca sekali. Untuk membuktikan sesuatu **tidak** ada, retry justru menyesatkan — ia lulus seketika lalu kontennya bisa menyusul. Jadi absence diperiksa setelah halaman tenang, dengan satu kali baca.
+
 ## Environment
 
 Tidak ada Supabase lokal dan tidak ada Docker (mesin dev kekurangan disk). Dua proyek Supabase cloud:
