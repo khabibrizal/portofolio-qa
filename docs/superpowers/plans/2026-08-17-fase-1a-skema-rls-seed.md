@@ -102,12 +102,16 @@ SUPABASE_DB_URL=
 - [ ] **Step 4: Tambahkan skrip ke `package.json`**
 
 ```json
-    "db:push": "supabase db push --db-url \"%SUPABASE_DB_URL%\"",
+    "db:push": "tsx scripts/db.ts push",
     "db:seed": "tsx scripts/db.ts seed",
     "db:reset": "tsx scripts/db.ts reset",
 ```
 
-`%SUPABASE_DB_URL%` adalah sintaks Windows dan tidak portabel ke runner Linux di CI. Karena itu `db:push` **tidak dipakai di CI** — CI hanya membaca database yang sudah bermigrasi. Migrasi selalu didorong dari mesin dev.
+**Koreksi terhadap draf awal rencana ini:** semula `db:push` memanggil CLI langsung dengan `--db-url "%SUPABASE_DB_URL%"`. Itu sintaks cmd Windows dan tidak portabel. Ketiganya kini lewat `scripts/db.ts`, yang memanggil CLI sebagai subproses — satu jalur, satu tempat membaca kredensial, jalan di platform mana pun.
+
+`scripts/db.ts` juga **memuat `.env.local` sendiri** alih-alih mengandalkan flag `--env-file` Node, yang ketersediaannya berbeda antar versi dan gagal keras bila berkasnya tidak ada. Variabel yang sudah ada di environment selalu menang atas isi berkas, sehingga skrip yang sama bisa dipakai dengan kredensial dari luar tanpa perubahan.
+
+Terlepas dari itu, `db:push` tetap **tidak dipakai di CI** — CI hanya membaca database yang sudah bermigrasi. Migrasi selalu didorong dari mesin dev.
 
 - [ ] **Step 5: Pasang dependensi**
 

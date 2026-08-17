@@ -11,6 +11,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "db:push": "tsx scripts/db.ts push",
+    "db:seed": "tsx scripts/db.ts seed",
+    "db:reset": "tsx scripts/db.ts reset",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test": "npm run typecheck && npm run lint && npm run test:unit && npm run test:e2e"
@@ -27,11 +30,14 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.21.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "pg": "^8.23.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }
