@@ -117,3 +117,14 @@ insert into public.testimonials (quote, author_name, author_role, author_company
    'Rekan Kerja', '{"id":"Engineering Lead","en":"Engineering Lead"}', null, 1, 'published'),
   ('{"id":"Draft.","en":"Draft."}', 'Draft', '{"id":"Draft","en":"Draft"}', null, 99, 'draft')
 on conflict do nothing;
+
+-- analytics_events sengaja diberi isi meski penulisannya baru dibangun di Fase 3.
+-- Alasannya bukan demo data: tanpa satu pun baris, test "anon tidak bisa membaca
+-- analytics" tidak bisa membedakan "ditutup RLS" dari "tabelnya memang kosong",
+-- sehingga tetap hijau walau kebijakannya bocor. Dibuktikan lewat mutasi.
+insert into public.analytics_events (event_type, event_label, locale, path, referrer_category)
+select * from (values
+  ('cta_click'::public.jenis_event,   'hubungi-saya', 'id', '/id', 'linkedin'::public.kategori_referrer),
+  ('cv_download'::public.jenis_event, 'unduh-cv',     'en', '/en', 'direct'::public.kategori_referrer)
+) as v(event_type, event_label, locale, path, referrer_category)
+where not exists (select 1 from public.analytics_events);
