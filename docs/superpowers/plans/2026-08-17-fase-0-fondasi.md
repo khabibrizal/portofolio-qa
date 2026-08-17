@@ -991,6 +991,20 @@ Jalankan seluruh definition of done secara berurutan:
 
 ---
 
+## Penyimpangan yang diterapkan saat eksekusi
+
+Dicatat agar rencana tidak berbeda pendapat dengan kode yang benar-benar ada.
+
+| # | Rencana semula | Yang dilakukan | Alasan |
+|---|---|---|---|
+| 1 | `layout.tsx` memakai `{ children }: { children: React.ReactNode }` | Mempertahankan `LayoutProps<"/">` bawaan scaffold | Next 16 memvalidasi ekspor layout terhadap tipe ter-generate; tipe manual berisiko gagal typecheck |
+| 2 | Tidak menyebut `src/app/page.tsx` | Diganti placeholder yang memakai kelas token (`font-display`, `text-ink-soft`, `text-ink-faint`) | Halaman bawaan scaffold merujuk token lama yang dihapus, dan berisi branding Next.js. Placeholder baru sekaligus membuktikan token menghasilkan utility class yang benar-benar dipakai build |
+| 3 | Browser Playwright diarahkan ke `E:\pw-browsers` via `PLAYWRIGHT_BROWSERS_PATH` | Pakai lokasi default | Chromium hanya ~150 MB dari sisa ~18 GB di C:; kekhawatiran disk yang sebenarnya adalah Docker 5-7 GB. Variabel environment juga tidak bertahan antar pemanggilan shell di lingkungan ini, sehingga mengandalkannya justru rapuh |
+| 4 | `vitest.config.ts` | `vitest.config.mts` | Vite memuat `.ts` sebagai CommonJS dan memperingatkan sintaks ESM pada setiap run; ekstensi `.mts` membersihkan log CI tanpa mengubah isi konfigurasi |
+| 5 | Test cache `/api/health` hanya memeriksa header | Ditambah `expect(response.status()).toBe(200)` sebelum memeriksa header | Next.js menyertakan `no-store` pada 404 bawaannya, sehingga test semula lulus meski endpoint tidak ada. Diverifikasi lewat mutasi: dengan route disembunyikan kini 2 test gagal, sebelumnya hanya 1 |
+| 6 | Tidak disebut | `package.json` `name` diperbaiki dari `portofolio-qa-scaffold`, dan `CLAUDE.md` hasil scaffold diisi panduan proyek | Nama paket menyisakan nama direktori sementara; `CLAUDE.md` semula hanya berisi `@AGENTS.md` |
+| 7 | Tidak disebut | Riwayat git ditulis ulang sebelum push pertama | Spec & `CLAUDE.md` versi awal menyebut nama employer dan merinci isi materi internalnya. Repo ini publik, jadi sanitasi harus mencakup riwayat, bukan hanya working tree |
+
 ## Catatan untuk perencanaan Fase 1
 
 Tiga hal berikut baru bisa dipastikan setelah Fase 0 selesai, dan jawabannya menentukan rencana Fase 1. Catat hasilnya:
