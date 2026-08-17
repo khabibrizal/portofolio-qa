@@ -64,8 +64,22 @@ function muatEnvLokal(): void {
  *
  * SUPABASE_DB_URL tetap didukung dan menang bila diisi, untuk kasus di mana
  * string utuh datang dari luar (mis. secret CI).
+ *
+ * `target` membedakan dua konsumen yang butuh penanganan TLS berbeda di
+ * lingkungan ini (rantai sertifikat pooler memuat sertifikat self-signed):
+ * - 'cli': dipakai Supabase CLI (biner Go) lewat `--db-url`. CLI mengikuti
+ *   semantik libpq asli untuk `sslmode=require` (enkripsi TANPA verifikasi
+ *   sertifikat) sehingga nilai ini di URL sudah cukup dan terbukti bekerja.
+ * - 'pg': dipakai `pg.Client` langsung. Library `pg` MENYIMPANGI semantik
+ *   libpq: `sslmode=require` di URL ia terjemahkan jadi `ssl: true` dengan
+ *   `rejectUnauthorized` default `true`, sehingga tetap gagal
+ *   `SELF_SIGNED_CERT_IN_CHAIN` walau caller memberi `ssl: {rejectUnauthorized:
+ *   false}` eksplisit (nilai dari URL menang atas objek yang diberikan,
+ *   dibuktikan lewat perbandingan hash tanpa mencetak password). Makanya untuk
+ *   'pg' URL ini TIDAK menyertakan `sslmode` sama sekali — pemanggil wajib
+ *   menyetel `ssl: { rejectUnauthorized: false }` sendiri di opsi `Client`.
  */
-function connectionString(): string {
+function connectionString(target: 'cli' | 'pg'): string {
   const utuh = process.env.SUPABASE_DB_URL
   if (utuh) return utuh
 
@@ -85,7 +99,8 @@ function connectionString(): string {
     )
   }
 
-  return `postgresql://${user}:${encodeURIComponent(password)}@${host}:5432/postgres?sslmode=no-verify`
+  const basis = `postgresql://${user}:${encodeURIComponent(password)}@${host}:5432/postgres`
+  return target === 'cli' ? `${basis}?sslmode=require` : basis
 }
 
 function bacaSeed(): string {
@@ -100,8 +115,14 @@ function bacaSeed(): string {
 function push(): void {
   const hasil = spawnSync(
     process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    ['--yes', 'supabase@latest', 'db', 'push', '--db-url', connectionString()],
-    { stdio: 'inherit' },
+    ['--yes', 'supabase@latest', 'db', 'push', '--db-url', connectionString('cli')],
+    // shell: true wajib di Windows — tanpanya spawnSync gagal EINVAL saat
+    // menjalankan file .cmd langsung (diverifikasi di lingkungan ini, Node 20.19.6).
+    // Argumen tetap dalam bentuk array (bukan satu string gabungan) sehingga
+    // Node yang meng-quote tiap argumen; connection string yang mengandung
+    // urutan ter-percent-encode terbukti utuh sampai ke proses anak (diuji
+    // dengan perbandingan hash, tanpa pernah mencetak nilainya).
+    { stdio: 'inherit', shell: process.platform === 'win32' },
   )
 
   if (hasil.status !== 0) {
@@ -111,7 +132,11 @@ function push(): void {
 
 async function seed({ kosongkanDulu }: { kosongkanDulu: boolean }): Promise<void> {
   const sql = bacaSeed()
-  const client = new Client({ connectionString: connectionString() })
+  // rejectUnauthorized: false eksplisit — lihat catatan di connectionString().
+  const client = new Client({
+    connectionString: connectionString('pg'),
+    ssl: { rejectUnauthorized: false },
+  })
   await client.connect()
 
   try {
