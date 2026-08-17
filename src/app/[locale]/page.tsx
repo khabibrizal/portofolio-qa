@@ -4,8 +4,12 @@ import { Nav } from '@/components/layout/Nav'
 import { About } from '@/components/sections/About'
 import { AutomationLab } from '@/components/sections/AutomationLab'
 import { CaseStudies } from '@/components/sections/CaseStudies'
+import { Certifications } from '@/components/sections/Certifications'
 import { Coverage } from '@/components/sections/Coverage'
+import { FinalCta } from '@/components/sections/FinalCta'
 import { Hero } from '@/components/sections/Hero'
+import { Testimonials } from '@/components/sections/Testimonials'
+import { Timeline } from '@/components/sections/Timeline'
 import { TrustStrip } from '@/components/sections/TrustStrip'
 import { getPageContent } from '@/lib/content/get-page-content'
 import { isLocale } from '@/lib/i18n/locales'
@@ -28,6 +32,14 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
         <Coverage skillCategories={konten.skillCategories} locale={locale} />
         <CaseStudies caseStudies={konten.caseStudies} locale={locale} />
         <AutomationLab labScenarios={konten.labScenarios} locale={locale} />
+        <Timeline experiences={konten.experiences} locale={locale} />
+        <Certifications
+          certifications={konten.certifications}
+          education={konten.education}
+          locale={locale}
+        />
+        <Testimonials testimonials={konten.testimonials} locale={locale} />
+        <FinalCta settings={konten.siteSettings} locale={locale} />
       </main>
       <Footer settings={konten.siteSettings} locale={locale} />
     </>

@@ -73,4 +73,32 @@ test.describe('/en — konten dari database', () => {
     expect(isi).toContain('Playwright')
     expect(isi).toContain('End-to-End Login & Checkout')
   })
+
+  test('Timeline menampilkan perusahaan, peran, dan periode berjalan', async ({ page }) => {
+    const isi = await page.locator('#pengalaman').innerText()
+
+    expect(isi).toContain('B2C Property Platform')
+    expect(isi).toContain('QA Engineer')
+    expect(isi).toContain('Present')
+  })
+
+  test('Certifications menampilkan sertifikasi dan edukasi published', async ({ page }) => {
+    const isi = await page.locator('#sertifikasi').innerText()
+
+    expect(isi).toContain('ISTQB Foundation Level')
+    expect(isi).toContain('B.Sc. Informatics')
+  })
+
+  test('Testimonials menampilkan kutipan dan nama pemberi testimoni', async ({ page }) => {
+    const isi = await page.locator('#testimoni').innerText()
+
+    expect(isi).toContain('Consistently finds edge cases')
+    expect(isi).toContain('Rekan Kerja')
+  })
+
+  test('FinalCta menampilkan headline ajakan kontak', async ({ page }) => {
+    const isi = await page.locator('#kontak').innerText()
+
+    expect(isi).toContain('Ready to help your team ship')
+  })
 })
