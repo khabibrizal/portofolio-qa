@@ -48,4 +48,27 @@ test.describe('/id — konten dari database', () => {
     expect(isi).toContain('Test Case Design')
     expect(isi).toContain('90%')
   })
+
+  test('CaseStudies menampilkan test_code, nama proyek, metrik, dan tag tool', async ({ page }) => {
+    const isi = await page.locator('#studi-kasus').innerText()
+
+    for (const kode of ['TC-001', 'TC-002']) {
+      expect(isi).toContain(kode)
+    }
+    expect(isi).toContain('Platform Properti B2C')
+    expect(isi).toContain('3 hari → 4 jam')
+    expect(isi).toContain('0')
+    for (const tool of ['Playwright', 'k6']) {
+      expect(isi).toContain(tool)
+    }
+  })
+
+  test('AutomationLab menampilkan framework dan judul skenario berbahasa Indonesia', async ({
+    page,
+  }) => {
+    const isi = await page.locator('#automation-lab').innerText()
+
+    expect(isi).toContain('Playwright')
+    expect(isi).toContain('Login & Checkout End-to-End')
+  })
 })

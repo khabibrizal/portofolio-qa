@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Nav } from '@/components/layout/Nav'
 import { About } from '@/components/sections/About'
+import { AutomationLab } from '@/components/sections/AutomationLab'
+import { CaseStudies } from '@/components/sections/CaseStudies'
 import { Coverage } from '@/components/sections/Coverage'
 import { Hero } from '@/components/sections/Hero'
 import { TrustStrip } from '@/components/sections/TrustStrip'
@@ -24,6 +26,8 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
         <TrustStrip tools={konten.tools} locale={locale} />
         <About about={konten.about} locale={locale} />
         <Coverage skillCategories={konten.skillCategories} locale={locale} />
+        <CaseStudies caseStudies={konten.caseStudies} locale={locale} />
+        <AutomationLab labScenarios={konten.labScenarios} locale={locale} />
       </main>
       <Footer settings={konten.siteSettings} locale={locale} />
     </>
