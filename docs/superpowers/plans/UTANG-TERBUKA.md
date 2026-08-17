@@ -25,3 +25,16 @@ Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fas
 ## U-2 — Node lokal 20, CI & produksi 22  🟡 disarankan
 
 Mesin dev memakai Node 20.19.6 sementara CI dan Vercel memakai Node 22, dan `@supabase/supabase-js` mendeklarasikan `engines.node >=22`. Semua hijau, tapi selisih runtime antara lokal dan produksi adalah sumber bug yang muncul belakangan. Naikkan mesin dev ke Node 22 LTS.
+
+## U-3 — Vercel belum tersambung ke GitHub  🟠 lunasi di Fase 1
+
+**Keadaan:** `vercel link` gagal mengaitkan repo GitHub (`Login Connection … 400`). Proyek Vercel hidup dan produksi sudah tayang, tapi **auto-deploy saat push tidak aktif** — setiap rilis harus dipicu manual dengan `vercel --prod`.
+
+**Kenapa ini penting, bukan sekadar kenyamanan:**
+
+- Preview deploy per-PR tidak terbuat, padahal rencana Fase 4 menjalankan E2E terhadap preview deploy.
+- Produksi bisa diam-diam tertinggal dari `master`. Badge CI akan tetap hijau karena CI menguji kode di repo, bukan yang tayang — sehingga badge hijau berdampingan dengan produksi yang usang. Itu justru jenis sinyal palsu yang paling merusak di portofolio QA.
+
+**Cara melunasi:** di dashboard Vercel → Project Settings → Git, sambungkan ke repo `khabibrizal/portofolio-qa` (butuh otorisasi GitHub lewat browser, tidak bisa dari CLI). Setelah tersambung, verifikasi dengan satu commit kecil ke `master` dan pastikan deploy berjalan sendiri.
+
+**Sementara belum lunas:** setelah setiap push yang mengubah kode aplikasi, jalankan `vercel --prod` secara manual.
