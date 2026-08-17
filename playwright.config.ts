@@ -30,6 +30,11 @@ export default defineConfig({
         command: 'npm run build && npm start',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
+        // Build bersih terukur ~82 detik di mesin dev, tapi bisa 2x lipat saat
+        // mesin sibuk — dan ambang lama (180s) sudah pernah membuat suite gagal
+        // karena kehabisan waktu, bukan karena ada yang salah dengan kodenya.
+        // Kegagalan seperti itu paling merugikan: ia mengajari orang untuk
+        // meragukan suite yang sebenarnya benar.
+        timeout: 420_000,
       },
 })
