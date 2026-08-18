@@ -130,6 +130,55 @@ function push(): void {
   }
 }
 
+/** Ref proyek Supabase, diturunkan dari username pooler `postgres.<ref>`. */
+function projectRef(): string {
+  const user = process.env.SUPABASE_DB_USER ?? ''
+  const cocok = user.match(/^postgres\.(.+)$/)
+  return cocok ? cocok[1] : ''
+}
+
+/**
+ * Pengaman `db:reset`.
+ *
+ * Proyek ini sengaja memakai SATU database untuk pengembangan dan produksi
+ * (keputusan sadar — lihat spec §9). Konsekuensinya `truncate` di sini
+ * menghapus isi portofolio yang sedang tayang, bukan sekadar data uji.
+ *
+ * Karena itu reset menuntut token konfirmasi yang memuat ref proyeknya. Bukan
+ * sekadar "ketik ya": token yang harus diketik ulang memaksa mata membaca
+ * database mana yang sedang dituju, sehingga perintah ini tidak bisa terpicu
+ * dari hafalan jari atau dari riwayat shell.
+ */
+function pastikanBolehReset(): void {
+  const ref = projectRef()
+  const diberikan = process.argv
+    .slice(3)
+    .find((a) => a.startsWith('--konfirmasi='))
+    ?.slice('--konfirmasi='.length)
+
+  if (diberikan && ref && diberikan === ref) return
+
+  throw new Error(
+    'db:reset MENGHAPUS seluruh isi database — termasuk konten portofolio yang tayang,\n' +
+      'karena proyek ini memakai satu database untuk dev dan produksi.\n\n' +
+      `Kalau memang itu yang kamu mau, ulangi dengan menyebut ref proyeknya:\n` +
+      `  npm run db:reset -- --konfirmasi=${ref || '<project-ref>'}\n\n` +
+      'Untuk sekadar memuat ulang seed tanpa menghapus apa pun, pakai: npm run db:seed',
+  )
+}
+
+/** Menampilkan apa yang akan hilang, sebelum benar-benar dihapus. */
+async function laporkanIsi(client: Client): Promise<number> {
+  let total = 0
+  for (const tabel of TABEL) {
+    const { rows } = await client.query(`select count(*)::int as n from public.${tabel}`)
+    const n = rows[0].n as number
+    total += n
+    if (n > 0) console.log(`  ${tabel}: ${n} baris`)
+  }
+  return total
+}
+
 async function seed({ kosongkanDulu }: { kosongkanDulu: boolean }): Promise<void> {
   const sql = bacaSeed()
   // rejectUnauthorized: false eksplisit — lihat catatan di connectionString().
@@ -141,6 +190,10 @@ async function seed({ kosongkanDulu }: { kosongkanDulu: boolean }): Promise<void
 
   try {
     if (kosongkanDulu) {
+      console.log(`Akan dikosongkan dari proyek ${projectRef()}:`)
+      const total = await laporkanIsi(client)
+      console.log(`  total ${total} baris`)
+
       const daftar = TABEL.map((t) => `public.${t}`).join(', ')
       await client.query(`truncate table ${daftar} cascade`)
       console.log(`Dikosongkan: ${TABEL.length} tabel`)
@@ -162,6 +215,7 @@ async function jalankan(perintah: Perintah): Promise<void> {
     case 'seed':
       return seed({ kosongkanDulu: false })
     case 'reset':
+      pastikanBolehReset()
       return seed({ kosongkanDulu: true })
   }
 }

@@ -34,7 +34,17 @@ export async function generateMetadata({
   // Metadata tidak boleh menjatuhkan halaman kalau database bermasalah.
   const settings = await ambilSiteSettings().catch(() => null)
 
+  // Situs tayang publik sementara isinya masih data contoh: nama, angka
+  // pengalaman, studi kasus, dan testimoni semuanya placeholder. Membiarkan
+  // mesin pencari mengindeksnya berarti klaim palsu beredar atas nama
+  // pemiliknya — persis kebalikan dari tujuan portofolio ini.
+  //
+  // noindex berlaku sampai konten asli masuk. Dilepas di Fase 5; dicatat
+  // sebagai U-5 di UTANG-TERBUKA.md agar tidak terlupakan.
+  const KONTEN_MASIH_CONTOH = true
+
   return {
+    robots: KONTEN_MASIH_CONTOH ? { index: false, follow: false } : undefined,
     title: teks(settings?.site_title, locale) || 'Portofolio QA Engineer',
     description: teks(settings?.meta_description, locale) || undefined,
     alternates: {

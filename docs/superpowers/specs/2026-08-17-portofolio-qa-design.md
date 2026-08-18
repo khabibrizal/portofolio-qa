@@ -250,14 +250,17 @@ Test RLS adalah satu-satunya yang membuktikan klaim keamanan §7 berlaku, bukan 
 
 **Tanpa Supabase lokal / Docker.** Mesin pengembangan tidak memiliki Docker dan sisa disk sangat terbatas (C: 18 GB, D: 11 GB per 2026-08-17); stack Supabase lokal menarik ~5-7 GB image di atas Docker Desktop sendiri. Risiko disk penuh lebih besar daripada manfaat determinisme lokal.
 
-Sebagai gantinya, dua proyek free tier Supabase dipakai sebagai berikut:
+**Revisi 2026-08-17 — satu environment, bukan dua.** Rencana semula memakai dua proyek Supabase (`dev` dan `prod`). Pemilik memutuskan tidak ada environment dev terpisah: satu proyek diperlakukan langsung sebagai produksi.
 
 | Proyek | Dipakai oleh |
 |---|---|
-| `portofolio-dev` | Pengembangan lokal, Vercel preview deploy, dan E2E/RLS di CI |
-| `portofolio-prod` | Produksi |
+| Satu proyek Supabase | Pengembangan lokal, Vercel preview, E2E/RLS di CI, **dan produksi** |
 
-Konsekuensi yang diterima sadar: pengembangan lokal dan E2E di CI berbagi satu database, sehingga bisa saling mengganggu jika berjalan bersamaan. Untuk proyek satu orang, peluang itu mendekati nol; jika suatu saat mengganggu, penyelesaiannya adalah membuat skema Postgres terpisah per environment di proyek yang sama, bukan menambah proyek.
+Yang membuat ini bisa dipertahankan: kolom `status` (`draft` / `published`) sudah berfungsi sebagai mekanisme staging, dan RLS memastikan draft tak pernah bocor ke publik. Untuk portofolio satu penulis, environment kedua menambah biaya kelola tanpa menambah perlindungan yang belum ada.
+
+Bahaya yang muncul dari keputusan ini, dan cara menutupnya: `npm run db:reset` menjalankan `TRUNCATE` ke dua belas tabel, sehingga tanpa environment terpisah ia menghapus isi portofolio yang tayang. `scripts/db.ts` karena itu menolak menjalankan reset tanpa `--konfirmasi=<project-ref>`, dan menampilkan cacah baris yang akan hilang sebelum menghapus. Token yang harus diketik ulang memaksa mata membaca database mana yang dituju.
+
+Sisa risiko yang diterima sadar: E2E di CI menembak database yang sama dengan yang dibaca publik. E2E hanya membaca; percobaan tulisnya memang ditolak RLS, dan itulah yang diuji.
 
 **Determinisme test dijaga di lapisan lain:**
 

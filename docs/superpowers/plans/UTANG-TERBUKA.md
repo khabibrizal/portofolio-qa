@@ -2,7 +2,27 @@
 
 Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fase sebelum utang yang jatuh tempo di fase itu lunas.
 
-## U-1 — Produksi masih menunjuk database dev  🔴 MEMBLOKIR FASE 1b
+## U-5 — Situs ber-noindex sampai konten asli masuk  🔴 lunasi di Fase 5
+
+**Keadaan:** `generateMetadata` di `src/app/[locale]/layout.tsx` mengembalikan `robots: { index: false, follow: false }` lewat konstanta `KONTEN_MASIH_CONTOH`.
+
+**Kenapa:** situs sudah tayang publik sementara seluruh isinya masih data contoh — nama, angka pengalaman, studi kasus, testimoni. Membiarkan mesin pencari mengindeksnya berarti klaim palsu beredar atas nama pemiliknya, persis kebalikan dari tujuan portofolio ini.
+
+**Cara melunasi:** setelah konten asli masuk (Fase 5), ubah `KONTEN_MASIH_CONTOH` jadi `false`, hapus konstantanya, dan verifikasi tag `robots` benar-benar hilang dari HTML produksi. Tambahkan asersi E2E bahwa halaman **tidak** ber-noindex, supaya tidak ada yang diam-diam mengembalikannya.
+
+**Risiko bila lupa:** portofolio tidak akan pernah muncul di pencarian — kegagalan senyap yang tidak menghasilkan error apa pun.
+
+## U-1 — Satu database untuk dev dan produksi  ✅ DITUTUP sebagai keputusan (2026-08-17)
+
+**Keputusan pemilik:** tidak ada environment dev terpisah. Satu proyek Supabase (`sgxepblrfqwbhhpmvaxm`) diperlakukan langsung sebagai produksi.
+
+**Alasan yang membuatnya bisa dipertahankan:** kolom `status` (`draft` / `published`) sudah berfungsi sebagai mekanisme staging — konten bisa disusun sebagai draft dan diterbitkan saat siap, dan RLS memastikan draft tak pernah bocor ke publik. Untuk portofolio satu penulis, environment kedua menambah biaya kelola tanpa menambah perlindungan yang belum ada.
+
+**Bahaya yang ditutup:** `npm run db:reset` menjalankan `TRUNCATE` ke dua belas tabel, sehingga dengan satu database ia menghapus isi portofolio yang tayang. Pengaman dipasang di `scripts/db.ts`: reset menolak jalan tanpa `--konfirmasi=<project-ref>`, dan menampilkan cacah baris yang akan hilang sebelum menghapus. Token yang harus diketik ulang memaksa mata membaca database mana yang dituju — perintah ini tidak bisa terpicu dari hafalan jari atau riwayat shell. Ketiga kasus (tanpa konfirmasi, konfirmasi salah, konfirmasi benar) sudah diuji.
+
+**Sisa risiko yang diterima sadar:** pengembangan lokal dan E2E di CI menembak database yang sama dengan yang dibaca publik. E2E hanya membaca; percobaan tulisnya memang ditolak RLS dan itulah yang diuji.
+
+## ~~U-1 lama~~ — Produksi masih menunjuk database dev
 
 **Koreksi tenggat (2026-08-17).** Semula ditulis memblokir seluruh Fase 1. Setelah ditinjau ulang, tenggat yang benar adalah **sebelum Fase 1b**, bukan sebelum migrasi Fase 1a. Alasannya konkret: sampai Fase 1b, aplikasi belum melakukan satu pun query ke tabel — produksi hanya menyajikan halaman placeholder dan `/api/health`. Membuat tabel dan seed di dev karena itu tidak membuat produksi menyajikan apa pun yang salah. Yang berbahaya adalah **merender** dari database, dan itu terjadi di 1b.
 
