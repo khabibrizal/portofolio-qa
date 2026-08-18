@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buatSkemaField, buatSkemaKoleksi, petaErrorDariZod } from '@/lib/admin/skema/ke-zod'
 import { skillCategories } from '@/lib/admin/skema/skill-categories'
-import type { DefinisiField } from '@/lib/admin/skema/tipe'
+import type { DefinisiField, DefinisiKoleksi } from '@/lib/admin/skema/tipe'
 
 describe('buatSkemaField — terlokalisasi wajib', () => {
   const definisi: DefinisiField = {
@@ -139,6 +139,114 @@ describe('buatSkemaField — repeater', () => {
 
   it('baris kosong ([]) diterima karena field "skills" tidak wajib', () => {
     expect(skema.safeParse([]).success).toBe(true)
+  })
+})
+
+describe('buatSkemaField — grup', () => {
+  // Bentuk hero.cta_primary: { label: LocalizedText, link: url }.
+  const anakCta: DefinisiField[] = [
+    { nama: 'label', label: 'Label', jenis: 'terlokalisasi', wajib: true },
+    { nama: 'link', label: 'Tautan', jenis: 'url', wajib: true },
+  ]
+  const definisi: DefinisiField = {
+    nama: 'cta_primary',
+    label: 'CTA Utama',
+    jenis: 'grup',
+    wajib: true,
+    anak: anakCta,
+  }
+  const skema = buatSkemaField(definisi)
+
+  it('kasus 1: menolak bila field anak yang wajib kosong, path error menyebut nama anaknya', () => {
+    const hasil = skema.safeParse({ label: { id: 'Lihat', en: 'View' }, link: '' })
+    expect(hasil.success).toBe(false)
+    if (hasil.success) return
+    const paths = hasil.error.issues.map((i) => i.path.join('.'))
+    expect(paths).toContain('link')
+  })
+
+  it('kasus 4: anak terlokalisasi di dalam grup tetap divalidasi kedua bahasanya', () => {
+    const hasil = skema.safeParse({ label: { id: '', en: '' }, link: 'https://contoh.test' })
+    expect(hasil.success).toBe(false)
+    if (hasil.success) return
+    const paths = hasil.error.issues.map((i) => i.path.join('.'))
+    expect(paths).toContain('label.id')
+    expect(paths).toContain('label.en')
+  })
+
+  it('menerima objek yang sah', () => {
+    const hasil = skema.safeParse({ label: { id: 'Lihat', en: 'View' }, link: 'https://contoh.test' })
+    expect(hasil.success).toBe(true)
+  })
+})
+
+describe('buatSkemaField — grup bersarang di dalam grup', () => {
+  // Bentuk mirip lab_scenarios.result_summary tapi sengaja dibuat 2 tingkat
+  // untuk membuktikan path bertingkat tetap benar (kasus 2).
+  const anakDalam: DefinisiField[] = [{ nama: 'total', label: 'Total', jenis: 'angka', wajib: true }]
+  const definisi: DefinisiField = {
+    nama: 'result_summary',
+    label: 'Ringkasan Hasil',
+    jenis: 'grup',
+    wajib: true,
+    anak: [{ nama: 'ringkas', label: 'Ringkas', jenis: 'grup', wajib: true, anak: anakDalam }],
+  }
+  const skema = buatSkemaField(definisi)
+
+  it('kasus 2: path error grup di dalam grup bertingkat dua level dengan benar', () => {
+    const hasil = skema.safeParse({ ringkas: {} })
+    expect(hasil.success).toBe(false)
+    if (hasil.success) return
+    expect(hasil.error.issues[0]?.path).toEqual(['ringkas', 'total'])
+  })
+})
+
+describe('buatSkemaField — grup opsional', () => {
+  const definisi: DefinisiField = {
+    nama: 'cta_secondary',
+    label: 'CTA Sekunder',
+    jenis: 'grup',
+    anak: [
+      { nama: 'label', label: 'Label', jenis: 'terlokalisasi', wajib: true },
+      { nama: 'link', label: 'Tautan', jenis: 'url', wajib: true },
+    ],
+  }
+  const skema = buatSkemaField(definisi)
+
+  it('kasus 3: grup opsional yang kosong (undefined) tidak memicu error', () => {
+    expect(skema.safeParse(undefined).success).toBe(true)
+  })
+})
+
+describe('buatSkemaKoleksi — grup di dalam koleksi (path lengkap lewat petaErrorDariZod)', () => {
+  const definisiKoleksi: DefinisiKoleksi = {
+    slug: 'contoh-grup',
+    tabel: 'contoh_grup',
+    label: 'Contoh Grup',
+    labelTunggal: 'Contoh Grup',
+    kolomJudul: 'nama',
+    field: [
+      {
+        nama: 'cta_primary',
+        label: 'CTA Utama',
+        jenis: 'grup',
+        wajib: true,
+        anak: [
+          { nama: 'label', label: 'Label', jenis: 'terlokalisasi', wajib: true },
+          { nama: 'link', label: 'Tautan', jenis: 'url', wajib: true },
+        ],
+      },
+    ],
+  }
+  const skema = buatSkemaKoleksi(definisiKoleksi)
+
+  it('path error anak terlokalisasi di dalam grup adalah "cta_primary.label.id" / "cta_primary.label.en"', () => {
+    const hasil = skema.safeParse({ cta_primary: { label: { id: '', en: '' }, link: 'https://contoh.test' } })
+    expect(hasil.success).toBe(false)
+    if (hasil.success) return
+    const peta = petaErrorDariZod(hasil.error)
+    expect(peta['cta_primary.label.id']).toBe('Wajib diisi')
+    expect(peta['cta_primary.label.en']).toBe('Wajib diisi')
   })
 })
 

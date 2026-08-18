@@ -29,6 +29,9 @@ export default defineConfig(({ mode }) => {
             name: 'unit',
             environment: 'node',
             include: ['tests/unit/**/*.test.ts'],
+            // Lihat catatan memori di bawah.
+            pool: 'threads',
+            maxWorkers: 2,
           },
         },
         {
@@ -38,6 +41,18 @@ export default defineConfig(({ mode }) => {
             environment: 'jsdom',
             include: ['tests/komponen/**/*.test.tsx'],
             setupFiles: ['./tests/komponen/setup.ts'],
+            // Mesin ini punya RAM 7,9 GB dengan tipikal ~1 GB bebas, sementara
+            // 12 core logis membuat Vitest men-spawn banyak worker sekaligus.
+            // Setiap worker 'forks' adalah proses Node terpisah, dan enam
+            // instance jsdom sekaligus melebihi memori yang ada — gejalanya
+            // "Failed to start forks worker" atau "Timeout waiting for worker
+            // to respond", muncul sporadis dan terlihat seperti flake di test.
+            //
+            // 'threads' berbagi heap satu proses, dan satu thread menghapus
+            // perebutannya sama sekali. Test jsdom di sini cepat begitu termuat;
+            // yang mahal adalah start-nya, jadi paralelisme tak banyak menolong.
+            pool: 'threads',
+            fileParallelism: false,
           },
         },
       ],

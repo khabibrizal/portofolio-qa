@@ -1,10 +1,11 @@
 import type { DefinisiField } from '@/lib/admin/skema/tipe'
-import type { Jalur } from '@/lib/admin/nilai'
+import { nilaiAwalField, type Jalur } from '@/lib/admin/nilai'
 import { FieldTeks } from './FieldTeks'
 import { FieldAngka } from './FieldAngka'
 import { FieldPilihan } from './FieldPilihan'
 import { FieldTerlokalisasi } from './FieldTerlokalisasi'
 import { FieldRepeater } from './FieldRepeater'
+import { FieldGrup } from './FieldGrup'
 
 export type OnChangeField = (jalur: Jalur, nilaiBaru: unknown) => void
 export type PetaError = Record<string, string>
@@ -95,6 +96,23 @@ export function RenderField({
           onChange={onChange}
         />
       )
+
+    case 'grup': {
+      // Sama seperti case 'terlokalisasi' di atas (nilai ?? {}), tapi
+      // memakai `nilaiAwalField` sebagai dasar karena bentuk kosong grup
+      // rekursif (anak-anaknya sendiri punya bentuk kosong masing-masing,
+      // mis. field terlokalisasi di dalamnya butuh {id:'', en:''} — bukan
+      // cuma objek `{}` kosong). Ini yang membuat grup yang nilainya
+      // `undefined` sejak awal (mis. baris repeater baru, atau koleksi baru
+      // yang belum memakai `nilaiAwalKoleksi`) tetap bisa langsung diisi
+      // tanpa nilai `undefined` menjalar ke field anaknya.
+      const kosong = nilaiAwalField(definisi) as Record<string, unknown>
+      const objek =
+        nilai && typeof nilai === 'object' && !Array.isArray(nilai)
+          ? { ...kosong, ...(nilai as Record<string, unknown>) }
+          : kosong
+      return <FieldGrup definisi={definisi} jalur={jalur} nilai={objek} errors={errors} onChange={onChange} />
+    }
 
     case 'daftar-teks': {
       // Belum ada komponen khusus untuk 'daftar-teks' di Fase 2a — tidak

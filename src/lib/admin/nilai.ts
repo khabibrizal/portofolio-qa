@@ -73,6 +73,20 @@ export function nilaiAwalField(definisi: DefinisiField): unknown {
       return []
     case 'angka':
       return undefined
+    case 'grup': {
+      // Sama seperti alasan 'terlokalisasi' di atas, tapi rekursif: setiap
+      // field anak grup diisi bentuk kosongnya SENDIRI (lewat panggilan
+      // rekursif ke fungsi ini) — bukan cuma `{}` kosong — supaya grup di
+      // dalam grup, atau field terlokalisasi di dalam grup, juga langsung
+      // berbentuk benar sejak render pertama. Tanpa ini, field grup yang
+      // wajib namun sama sekali tidak ada di nilai akan gagal validasi di
+      // jalur field itu sendiri (mis. "cta_primary"), bukan di jalur anaknya
+      // ("cta_primary.label.id") — persis bug yang sama yang tadinya
+      // ditemukan pada 'terlokalisasi'.
+      const bentuk: Record<string, unknown> = {}
+      for (const anak of definisi.anak ?? []) bentuk[anak.nama] = nilaiAwalField(anak)
+      return bentuk
+    }
     default:
       return ''
   }

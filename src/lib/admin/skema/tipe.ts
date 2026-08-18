@@ -9,6 +9,7 @@ export type JenisField =
   | 'url'
   | 'daftar-teks'
   | 'repeater'
+  | 'grup'
 
 export type DefinisiField = {
   nama: string
@@ -18,7 +19,7 @@ export type DefinisiField = {
   petunjuk?: string
   /** Hanya untuk 'pilihan'. */
   opsi?: { nilai: string; label: string }[]
-  /** Hanya untuk 'repeater' — bentuk tiap barisnya. */
+  /** Hanya untuk 'repeater' (bentuk tiap barisnya) dan 'grup' (field objek tunggalnya). */
   anak?: DefinisiField[]
   /** Hanya untuk 'angka'. */
   min?: number

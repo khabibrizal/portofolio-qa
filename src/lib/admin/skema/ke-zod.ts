@@ -62,6 +62,16 @@ function skemaUntukJenis(definisi: DefinisiField): z.ZodTypeAny {
       return skema
     }
 
+    case 'grup':
+      // Objek tunggal berfield tetap — bukan array seperti 'repeater'. Setiap
+      // field anak divalidasi lewat skemanya sendiri (termasuk `wajib`-nya
+      // masing-masing), dan karena ini z.object bersarang, Zod otomatis
+      // menambahkan nama field anak (dan seterusnya untuk grup bersarang) di
+      // depan path issue-nya — jadi error di dalam grup selalu punya alamat
+      // (mis. ['cta_primary', 'link'] atau ['cta_primary', 'label', 'id']),
+      // tidak pernah muncul tanpa menyebut anak mana yang salah.
+      return buatSkemaBaris(definisi.anak ?? [])
+
     default:
       return takTerduga(definisi.jenis)
   }

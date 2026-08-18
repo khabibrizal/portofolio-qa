@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { bacaNilai, nilaiAwalKoleksi, tulisNilai } from '@/lib/admin/nilai'
+import { bacaNilai, nilaiAwalField, nilaiAwalKoleksi, tulisNilai } from '@/lib/admin/nilai'
 import { skillCategories } from '@/lib/admin/skema/skill-categories'
 import { buatSkemaKoleksi, petaErrorDariZod } from '@/lib/admin/skema/ke-zod'
+import type { DefinisiField, DefinisiKoleksi } from '@/lib/admin/skema/tipe'
 
 describe('tulisNilai', () => {
   it('menulis field top-level tanpa mengubah field lain', () => {
@@ -93,5 +94,56 @@ describe('nilaiAwalKoleksi', () => {
     const petaDenganDefault = petaErrorDariZod(hasilDenganDefault.error)
     expect(petaDenganDefault['category_name.id']).toBe('Wajib diisi')
     expect(petaDenganDefault['category_name.en']).toBe('Wajib diisi')
+  })
+
+  it('mengisi bentuk kosong rekursif untuk field grup (dipakai FieldGrup: nilai undefined tidak boleh menjalar)', () => {
+    const definisiCta: DefinisiField = {
+      nama: 'cta_primary',
+      label: 'CTA Utama',
+      jenis: 'grup',
+      wajib: true,
+      anak: [
+        { nama: 'label', label: 'Label', jenis: 'terlokalisasi', wajib: true },
+        { nama: 'link', label: 'Tautan', jenis: 'url', wajib: true },
+      ],
+    }
+    expect(nilaiAwalField(definisiCta)).toEqual({ label: { id: '', en: '' }, link: '' })
+  })
+
+  it('regresi grup: tanpa bentuk kosong, grup wajib yang sama sekali kosong gagal di jalur field itu sendiri, bukan di jalur anaknya', () => {
+    const definisiKoleksi: DefinisiKoleksi = {
+      slug: 'contoh-hero',
+      tabel: 'contoh_hero',
+      label: 'Contoh Hero',
+      labelTunggal: 'Contoh Hero',
+      kolomJudul: 'nama',
+      field: [
+        {
+          nama: 'cta_primary',
+          label: 'CTA Utama',
+          jenis: 'grup',
+          wajib: true,
+          anak: [
+            { nama: 'label', label: 'Label', jenis: 'terlokalisasi', wajib: true },
+            { nama: 'link', label: 'Tautan', jenis: 'url', wajib: true },
+          ],
+        },
+      ],
+    }
+    const skema = buatSkemaKoleksi(definisiKoleksi)
+
+    // Tanpa nilaiAwalKoleksi: cta_primary sama sekali tidak ada di objek.
+    const hasilTanpaDefault = skema.safeParse({})
+    if (hasilTanpaDefault.success) throw new Error('seharusnya gagal validasi')
+    const petaTanpaDefault = petaErrorDariZod(hasilTanpaDefault.error)
+    expect(petaTanpaDefault['cta_primary.label.id']).toBeUndefined()
+
+    // Dengan nilaiAwalKoleksi: cta_primary sudah berbentuk {label:{id:'',en:''}, link:''}.
+    const hasilDenganDefault = skema.safeParse(nilaiAwalKoleksi(definisiKoleksi, {}))
+    if (hasilDenganDefault.success) throw new Error('seharusnya gagal validasi')
+    const petaDenganDefault = petaErrorDariZod(hasilDenganDefault.error)
+    expect(petaDenganDefault['cta_primary.label.id']).toBe('Wajib diisi')
+    expect(petaDenganDefault['cta_primary.label.en']).toBe('Wajib diisi')
+    expect(petaDenganDefault['cta_primary.link']).toBe('URL tidak valid')
   })
 })
