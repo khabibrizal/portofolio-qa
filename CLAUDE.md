@@ -48,12 +48,27 @@ Setelah menulis test yang langsung hijau, **rusak kodenya sengaja dan pastikan t
 
 **Presence pakai asersi yang retry, absence pakai baca sekali.** `await expect(locator).toContainText('x')` mengulang sampai muncul; `const t = await locator.innerText()` membaca sekali. Untuk membuktikan sesuatu **tidak** ada, retry justru menyesatkan — ia lulus seketika lalu kontennya bisa menyusul. Jadi absence diperiksa setelah halaman tenang, dengan satu kali baca.
 
+### innerText menerapkan CSS, textContent tidak
+
+Untuk memeriksa **ketiadaan** teks, pakai `textContent` dan bandingkan tanpa peduli huruf besar. `innerText` mengembalikan teks **hasil render**, yang sudah menerapkan `text-transform` — teks ber-`uppercase` di CSS akan terbaca `SEPERTI INI`, dan pencocokan persis meleset.
+
+Ini pernah membuat test "tidak satu pun baris draft tampil" tak pernah bisa gagal untuk satu koleksi. Dibuktikan dengan melumpuhkan kedua lapis pengaman sekaligus: draft benar-benar terkirim ke halaman, dan test tetap hijau.
+
+### Jangan mem-grep keluaran Vitest
+
+Baris ringkasan bisa berbunyi `51 passed` padahal enam berkas gagal dijalankan (`Failed to start forks worker`, muncul saat mesin terbebani). Hanya **exit code** yang jujur. Mem-grep `Tests ` menyembunyikan pesan itu dan membuat kehilangan cakupan terlihat seperti keberhasilan.
+
 ## Environment
 
-Tidak ada Supabase lokal dan tidak ada Docker (mesin dev kekurangan disk). Dua proyek Supabase cloud:
+Tidak ada Supabase lokal dan tidak ada Docker (mesin dev kekurangan disk).
 
-- `portofolio-dev` — dev lokal, Vercel preview, E2E di CI
-- `portofolio-prod` — produksi
+**Satu proyek Supabase dipakai untuk semuanya** — pengembangan lokal, E2E di CI, dan produksi (keputusan pemilik; lihat revisi §9 di spec). Kolom `status` yang berperan sebagai staging, dan RLS yang menjaga draft tak bocor.
+
+Konsekuensinya yang harus selalu diingat:
+
+- `npm run db:reset` menghapus isi portofolio yang **tayang**. Ia menolak jalan tanpa `--konfirmasi=<project-ref>`.
+- Test yang menulis wajib memakai nama berawalan `ZZ-UJI-` dan membersihkannya di `afterAll` yang selalu berjalan.
+- Playwright dikunci `workers: 1`: satu database dipakai bersama test yang menulis dan yang membaca, jadi paralelisme menghasilkan kegagalan yang tak ada hubungannya dengan kode — dan diukur di mesin ini, justru lebih lambat.
 
 ## Perintah
 
@@ -72,13 +87,3 @@ npm test            # semua di atas, berurutan
 - **Jangan menautkan artefak internal tempat kerja** — report test, dashboard, tiket, atau repo pekerjaan — dari mana pun di proyek ini. Bukti kerja dipakai sebagai angka yang dianonimkan saja.
 - Jangan menyebut nama perusahaan tempat kerja, nama klien, atau ID tiket di mana pun, termasuk di dokumen dan pesan commit (keputusan D5 di spec).
 - Jangan menghapus blok `<!-- BEGIN:nextjs-agent-rules -->` di `AGENTS.md` — `next dev` menulisnya ulang, dan menghapusnya hanya menghasilkan diff yang muncul terus.
-
-### innerText menerapkan CSS, textContent tidak
-
-Untuk memeriksa **ketiadaan** teks, pakai `textContent` dan bandingkan tanpa peduli huruf besar. `innerText` mengembalikan teks **hasil render**, yang sudah menerapkan `text-transform` — teks ber-`uppercase` di CSS akan terbaca `SEPERTI INI`, dan pencocokan persis meleset.
-
-Ini pernah membuat test "tidak satu pun baris draft tampil" tak pernah bisa gagal untuk satu koleksi. Dibuktikan dengan melumpuhkan kedua lapis pengaman sekaligus: draft benar-benar terkirim ke halaman, dan test tetap hijau.
-
-### Jangan mem-grep keluaran Vitest
-
-Baris ringkasan bisa berbunyi `51 passed` padahal enam berkas gagal dijalankan (`Failed to start forks worker`, muncul saat mesin terbebani). Hanya **exit code** yang jujur. Mem-grep `Tests ` menyembunyikan pesan itu dan membuat kehilangan cakupan terlihat seperti keberhasilan.
