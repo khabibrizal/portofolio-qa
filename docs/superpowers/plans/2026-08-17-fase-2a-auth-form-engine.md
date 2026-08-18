@@ -385,6 +385,7 @@ export const skillCategories: DefinisiKoleksi = {
 
 - [ ] Kerangka: navigasi koleksi dari registry (bukan daftar keras), tombol keluar, dan penanda akun yang sedang masuk.
 - [ ] Daftar entri: judul dari `kolomJudul`, lencana status draft/terbit, urutan, tombol ubah, tombol tambah.
+- [ ] Slug tak dikenal di URL harus menghasilkan **404, bukan 500**. `cariDefinisiKoleksi()` sengaja melempar karena slug tak terdaftar selalu berarti bug pemanggil — tapi di rute `[koleksi]`, slug datang dari alamat yang diketik orang. Rute wajib memeriksa keanggotaan registry lebih dulu lalu memanggil `notFound()`, bukan membiarkan lemparan itu jadi layar error.
 - [ ] Commit — `feat(admin): kerangka admin dan daftar entri`
 
 ---
