@@ -44,6 +44,28 @@ export default async function LayoutTerlindungi({ children }: { children: React.
           ))}
         </nav>
 
+        {/* Pratinjau (Task 7) — rute terpisah `/admin/pratinjau/[locale]`,
+            BUKAN cookie di landing (D14). Tertaut untuk kedua locale karena
+            keduanya bisa punya draft berbeda (mis. category_name terisi di
+            id tapi belum di en). */}
+        <nav className="flex flex-col gap-1 border-t border-border pt-4">
+          <span className="px-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
+            Pratinjau
+          </span>
+          <Link
+            href="/admin/pratinjau/id"
+            className="rounded-md px-3 py-2 text-sm text-ink-soft hover:bg-primary-tint hover:text-primary"
+          >
+            Pratinjau (ID)
+          </Link>
+          <Link
+            href="/admin/pratinjau/en"
+            className="rounded-md px-3 py-2 text-sm text-ink-soft hover:bg-primary-tint hover:text-primary"
+          >
+            Pratinjau (EN)
+          </Link>
+        </nav>
+
         <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4 text-sm">
           <span className="text-ink-soft">
             Masuk sebagai <strong className="text-ink">{user.email}</strong>

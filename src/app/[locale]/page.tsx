@@ -1,16 +1,5 @@
 import { notFound } from 'next/navigation'
-import { Footer } from '@/components/layout/Footer'
-import { Nav } from '@/components/layout/Nav'
-import { About } from '@/components/sections/About'
-import { AutomationLab } from '@/components/sections/AutomationLab'
-import { CaseStudies } from '@/components/sections/CaseStudies'
-import { Certifications } from '@/components/sections/Certifications'
-import { Coverage } from '@/components/sections/Coverage'
-import { FinalCta } from '@/components/sections/FinalCta'
-import { Hero } from '@/components/sections/Hero'
-import { Testimonials } from '@/components/sections/Testimonials'
-import { Timeline } from '@/components/sections/Timeline'
-import { TrustStrip } from '@/components/sections/TrustStrip'
+import { KomposisiHalaman } from '@/components/KomposisiHalaman'
 import { getPageContent } from '@/lib/content/get-page-content'
 import { isLocale } from '@/lib/i18n/locales'
 
@@ -22,26 +11,5 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
 
   const konten = await getPageContent()
 
-  return (
-    <>
-      <Nav settings={konten.siteSettings} locale={locale} />
-      <main className="flex-1">
-        <Hero hero={konten.hero} locale={locale} />
-        <TrustStrip tools={konten.tools} locale={locale} />
-        <About about={konten.about} locale={locale} />
-        <Coverage skillCategories={konten.skillCategories} locale={locale} />
-        <CaseStudies caseStudies={konten.caseStudies} locale={locale} />
-        <AutomationLab labScenarios={konten.labScenarios} locale={locale} />
-        <Timeline experiences={konten.experiences} locale={locale} />
-        <Certifications
-          certifications={konten.certifications}
-          education={konten.education}
-          locale={locale}
-        />
-        <Testimonials testimonials={konten.testimonials} locale={locale} />
-        <FinalCta settings={konten.siteSettings} locale={locale} />
-      </main>
-      <Footer settings={konten.siteSettings} locale={locale} />
-    </>
-  )
+  return <KomposisiHalaman konten={konten} locale={locale} />
 }

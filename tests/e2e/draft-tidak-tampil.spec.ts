@@ -25,9 +25,20 @@ const PENANDA_DRAFT = [
 for (const locale of ['id', 'en']) {
   test(`/${locale}: tidak satu pun baris draft tampil`, async ({ page }) => {
     await page.goto(`/${locale}`)
-    const isi = await page.locator('body').innerText()
+    // textContent, BUKAN innerText — dan dibandingkan tanpa peduli huruf besar.
+    //
+    // innerText mengembalikan teks HASIL RENDER, yang sudah menerapkan
+    // text-transform CSS. Judul kategori di section Coverage berkelas
+    // uppercase, sehingga penanda 'Kategori Draft' muncul di layar sebagai
+    // 'KATEGORI DRAFT' dan pencocokan persis meleset.
+    //
+    // Dibuktikan: dengan filter status di queries.ts dihapus DAN kebijakan
+    // RLS anon dilonggarkan jadi using (true) — dua-duanya lumpuh, draft
+    // benar-benar terkirim ke halaman — versi lama test ini tetap hijau.
+    // Ia tidak pernah bisa menangkap kebocoran skill_categories.
+    const isi = ((await page.locator('body').textContent()) ?? '').toLowerCase()
 
-    const bocor = PENANDA_DRAFT.filter((penanda) => isi.includes(penanda))
+    const bocor = PENANDA_DRAFT.filter((penanda) => isi.includes(penanda.toLowerCase()))
 
     expect(
       bocor,
