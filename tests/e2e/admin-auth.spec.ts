@@ -15,10 +15,25 @@ test.describe('Penjaga rute admin', () => {
     await expect(page.getByLabel('Kata sandi')).toBeVisible()
   })
 
-  test('tidak ada halaman pendaftaran publik', async ({ page }) => {
+  test('tidak ada rute yang menyajikan formulir pendaftaran', async ({ page }) => {
+    // Versi pertama test ini menuntut status 404, dan itu rumusan yang salah:
+    // proxy memang mengalihkan seluruh /admin/* yang belum berotorisasi ke
+    // login, sehingga path apa pun menjawab 200. Untuk memenuhinya, kode
+    // produksi sempat diberi daftar path yang DILEWATKAN dari pemeriksaan
+    // sesi — artinya begitu ada yang membuat halaman di salah satu path itu,
+    // halamannya terbuka tanpa login. Test yang salah rumus melahirkan lubang
+    // keamanan; rumusannya diperbaiki, dan daftar itu dibuang.
+    //
+    // Yang benar-benar dijaga bukan kode statusnya, melainkan bahwa tidak ada
+    // tempat untuk mendaftar. Sisi kodenya dijaga tests/unit/tanpa-pendaftaran.test.ts.
     for (const rute of ['/admin/daftar', '/admin/signup', '/admin/register']) {
-      const res = await page.goto(rute)
-      expect(res?.status(), `${rute} seharusnya tidak ada`).toBe(404)
+      await page.goto(rute)
+      await expect(page, `${rute} seharusnya berujung di login`).toHaveURL(/\/admin\/login/)
+
+      const isi = await page.locator('body').innerText()
+      for (const kata of ['Daftar', 'Sign up', 'Buat akun', 'Register']) {
+        expect(isi, `${rute} menampilkan ajakan mendaftar: "${kata}"`).not.toContain(kata)
+      }
     }
   })
 
