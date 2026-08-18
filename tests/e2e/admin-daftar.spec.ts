@@ -66,9 +66,27 @@ test.describe('Kerangka admin dan daftar entri', () => {
     expect(isi).not.toContain('[object Object]')
     expect(isi).not.toContain('Draft Category')
 
-    // Lencana draft/terbit membedakan entri — dua terbit, satu draft.
-    await expect(page.getByText('Draft', { exact: true })).toHaveCount(1)
-    await expect(page.getByText('Terbit', { exact: true })).toHaveCount(2)
+    // Lencana diperiksa PER BARIS, bukan lewat cacah total.
+    //
+    // Versi pertama mengasersi cacah global "Draft" = 1 dan "Terbit" = 2 — dan itu
+    // asersi tentang keadaan BERSAMA: begitu suite lain menambah entri di
+    // tabel yang sama (mis. admin-terbit.spec.ts saat berjalan paralel),
+    // test ini gagal karena sebab yang tak ada hubungannya dengan apa yang
+    // ingin dijaga. Kegagalan semacam itu mengajari orang meragukan suite
+    // yang sebenarnya benar.
+    //
+    // Yang benar-benar ingin dijaga adalah: entri terbit berlencana Terbit,
+    // entri draft berlencana Draft. Itu pernyataan tentang baris tertentu,
+    // dan kebal terhadap entri lain yang kebetulan ada.
+    const baris = (judul: string) => page.locator('li').filter({ hasText: judul })
+
+    await expect(baris('Manual Testing')).toContainText('Terbit')
+    await expect(baris('Automation Testing')).toContainText('Terbit')
+    await expect(baris('Kategori Draft')).toContainText('Draft')
+
+    // Dan yang draft TIDAK boleh berlencana terbit, maupun sebaliknya.
+    await expect(baris('Kategori Draft')).not.toContainText('Terbit')
+    await expect(baris('Manual Testing')).not.toContainText('Draft')
   })
 
   test('/admin/koleksi-ngawur menghasilkan 404, bukan 500 maupun alihan login', async ({ page }) => {

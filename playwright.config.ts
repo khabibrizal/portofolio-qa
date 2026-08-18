@@ -12,10 +12,19 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 export default defineConfig({
   testDir: './tests',
   testMatch: ['e2e/**/*.spec.ts', 'api/**/*.spec.ts', 'rls/**/*.spec.ts'],
-  fullyParallel: true,
+  // Sengaja TIDAK paralel. Proyek ini memakai satu database untuk semua —
+  // pengembangan, test, dan produksi (spec §9). Test yang menulis (siklus
+  // penerbitan admin) karena itu berbagi keadaan dengan test yang membaca
+  // (landing, daftar entri), dan menjalankannya berbarengan menghasilkan
+  // kegagalan yang tak ada hubungannya dengan kode.
+  //
+  // Bukan sekadar soal kebenaran: diukur di mesin ini, satu worker selesai
+  // ~35 detik sementara multi-worker 5,2 menit karena saling berebut server
+  // dan database. Jadi paralelisme di sini merugikan dua-duanya.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }]]
     : [['list']],
