@@ -72,3 +72,13 @@ npm test            # semua di atas, berurutan
 - **Jangan menautkan artefak internal tempat kerja** — report test, dashboard, tiket, atau repo pekerjaan — dari mana pun di proyek ini. Bukti kerja dipakai sebagai angka yang dianonimkan saja.
 - Jangan menyebut nama perusahaan tempat kerja, nama klien, atau ID tiket di mana pun, termasuk di dokumen dan pesan commit (keputusan D5 di spec).
 - Jangan menghapus blok `<!-- BEGIN:nextjs-agent-rules -->` di `AGENTS.md` — `next dev` menulisnya ulang, dan menghapusnya hanya menghasilkan diff yang muncul terus.
+
+### innerText menerapkan CSS, textContent tidak
+
+Untuk memeriksa **ketiadaan** teks, pakai `textContent` dan bandingkan tanpa peduli huruf besar. `innerText` mengembalikan teks **hasil render**, yang sudah menerapkan `text-transform` — teks ber-`uppercase` di CSS akan terbaca `SEPERTI INI`, dan pencocokan persis meleset.
+
+Ini pernah membuat test "tidak satu pun baris draft tampil" tak pernah bisa gagal untuk satu koleksi. Dibuktikan dengan melumpuhkan kedua lapis pengaman sekaligus: draft benar-benar terkirim ke halaman, dan test tetap hijau.
+
+### Jangan mem-grep keluaran Vitest
+
+Baris ringkasan bisa berbunyi `51 passed` padahal enam berkas gagal dijalankan (`Failed to start forks worker`, muncul saat mesin terbebani). Hanya **exit code** yang jujur. Mem-grep `Tests ` menyembunyikan pesan itu dan membuat kehilangan cakupan terlihat seperti keberhasilan.
