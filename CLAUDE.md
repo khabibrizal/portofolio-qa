@@ -58,6 +58,17 @@ Ini pernah membuat test "tidak satu pun baris draft tampil" tak pernah bisa gaga
 
 Baris ringkasan bisa berbunyi `51 passed` padahal enam berkas gagal dijalankan (`Failed to start forks worker`, muncul saat mesin terbebani). Hanya **exit code** yang jujur. Mem-grep `Tests ` menyembunyikan pesan itu dan membuat kehilangan cakupan terlihat seperti keberhasilan.
 
+### Mutasi yang menyentuh data harus dijalankan dengan build segar
+
+Landing di-prerender (`● /id`, `● /en`). Playwright memakai `reuseExistingServer` secara lokal, jadi mengubah database lalu menjalankan test akan membaca **HTML lama** dan mutasinya tampak tidak berpengaruh — hijau palsu yang meyakinkan.
+
+Sudah dua kali menipu: saat menguji kebocoran draft, dan saat menguji gambar yang rusak. Sebelum uji daya gigit yang mengubah data, selalu:
+
+```bash
+netstat -ano | grep ':3000' | grep LISTENING   # matikan servernya
+rm -rf .next
+```
+
 ## Environment
 
 Tidak ada Supabase lokal dan tidak ada Docker (mesin dev kekurangan disk).
@@ -87,14 +98,3 @@ npm test            # semua di atas, berurutan
 - **Jangan menautkan artefak internal tempat kerja** — report test, dashboard, tiket, atau repo pekerjaan — dari mana pun di proyek ini. Bukti kerja dipakai sebagai angka yang dianonimkan saja.
 - Jangan menyebut nama perusahaan tempat kerja, nama klien, atau ID tiket di mana pun, termasuk di dokumen dan pesan commit (keputusan D5 di spec).
 - Jangan menghapus blok `<!-- BEGIN:nextjs-agent-rules -->` di `AGENTS.md` — `next dev` menulisnya ulang, dan menghapusnya hanya menghasilkan diff yang muncul terus.
-
-### Mutasi yang menyentuh data harus dijalankan dengan build segar
-
-Landing di-prerender (`● /id`, `● /en`). Playwright memakai `reuseExistingServer` secara lokal, jadi mengubah database lalu menjalankan test akan membaca **HTML lama** dan mutasinya tampak tidak berpengaruh — hijau palsu yang meyakinkan.
-
-Sudah dua kali menipu: saat menguji kebocoran draft, dan saat menguji gambar yang rusak. Sebelum uji daya gigit yang mengubah data, selalu:
-
-```bash
-netstat -ano | grep ':3000' | grep LISTENING   # matikan servernya
-rm -rf .next
-```
