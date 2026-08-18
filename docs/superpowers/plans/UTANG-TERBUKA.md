@@ -2,6 +2,16 @@
 
 Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fase sebelum utang yang jatuh tempo di fase itu lunas.
 
+## U-6 — Audit RLS belum berjalan di CI  🟠 pertimbangkan di Fase 4
+
+**Keadaan:** `npm run db:audit-rls` mensimulasikan pengguna terautentikasi bukan-pemilik langsung di Postgres dan membuktikan seluruh tulisannya ditolak RLS. Ia hanya bisa dijalankan **lokal**, karena butuh `SUPABASE_DB_*` yang sengaja tidak disimpan sebagai GitHub Secret.
+
+**Kenapa belum diwiring ke CI:** kredensial itu memberi akses penuh ke database dan **menembus RLS**. Repo ini publik; menaruhnya di Secret memperluas area kerusakan bila ada workflow yang salah dikonfigurasi. Suite yang sudah berjalan di CI (`tests/rls/`) tetap menjaga sisi anonim lewat REST.
+
+**Cara melunasi bila diputuskan perlu:** simpan `SUPABASE_DB_HOST` / `_USER` / `_PASSWORD` sebagai Secret, tambahkan langkah `npm run db:audit-rls` ke `ci.yml`, dan batasi workflow agar tidak berjalan pada PR dari fork.
+
+**Sementara belum:** jalankan `npm run db:audit-rls` sebelum setiap deploy yang menyentuh migrasi atau kebijakan.
+
 ## U-5 — Situs ber-noindex sampai konten asli masuk  🔴 lunasi di Fase 5
 
 **Keadaan:** `generateMetadata` di `src/app/[locale]/layout.tsx` mengembalikan `robots: { index: false, follow: false }` lewat konstanta `KONTEN_MASIH_CONTOH`.
