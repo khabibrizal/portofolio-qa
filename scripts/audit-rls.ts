@@ -168,6 +168,37 @@ async function main() {
     catat('analytics tertutup untuk bukan-pemilik', analytics.baris === 0,
       analytics.baris > 0 ? `${analytics.baris} baris terbaca — bocor` : '')
 
+    // --- Storage: bucket publik untuk dibaca, tapi tulisan hanya pemilik ---
+    //
+    // Taruhannya berbeda dari tabel konten: bucket ini dilayani di domain
+    // portofolio, jadi tulisan yang bocor berarti siapa pun bisa menaruh
+    // berkas di sana atas nama pemiliknya.
+    const sisipObjek =
+      "insert into storage.objects (bucket_id, name) values ('media', 'audit/uji.txt')"
+
+    harusDitolakRls(
+      'storage.objects: unggah oleh bukan-pemilik ditolak RLS',
+      await sebagai(client, 'authenticated', UID_BUKAN_PEMILIK, sisipObjek),
+    )
+    harusDitolakRls(
+      'storage.objects: unggah oleh anon ditolak RLS',
+      await sebagai(client, 'anon', null, sisipObjek),
+    )
+
+    const hapusObjek = await sebagai(
+      client, 'authenticated', UID_BUKAN_PEMILIK,
+      "delete from storage.objects where bucket_id = 'media'",
+    )
+    catat(
+      'storage.objects: hapus oleh bukan-pemilik tidak mengenai baris',
+      hapusObjek.baris === 0,
+      hapusObjek.baris > 0 ? `${hapusObjek.baris} objek terhapus — kebijakan bocor` : '',
+    )
+
+    const unggahPemilik = await sebagai(client, 'authenticated', pemilik, sisipObjek)
+    catat('pemilik bisa mengunggah ke storage', unggahPemilik.berhasil,
+      unggahPemilik.pesan.slice(0, 90))
+
     // --- Pemilik HARUS bisa bekerja; kalau tidak, admin tak akan berfungsi ---
     const pemilikTulis = await sebagai(client, 'authenticated', pemilik, SISIP.tools)
     catat('pemilik bisa menulis', pemilikTulis.berhasil, pemilikTulis.pesan.slice(0, 90))
