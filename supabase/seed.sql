@@ -28,11 +28,15 @@ values (1, 'Nama Lengkap',
   '{"label":{"id":"Unduh CV","en":"Download CV"},"link":"#"}'::jsonb)
 on conflict (id) do nothing;
 
-insert into public.about (id, about_richtext, highlight_badges)
+-- profile_photo diisi: cabang <Image> di About.tsx tidak pernah dieksekusi test
+-- mana pun selama kolom ini null (U-4). Berkasnya sungguhan, sudah diunggah ke
+-- bucket 'media', dan path-nya object path — bukan URL penuh (D19).
+insert into public.about (id, about_richtext, highlight_badges, profile_photo)
 values (1,
   '{"id":"Quality bukan cuma mencari bug, tapi membangun kepercayaan pada rilis.","en":"Quality is not just finding bugs — it is building confidence in every release."}',
   '[{"text":{"id":"Manual & Automation","en":"Manual & Automation"}},
-    {"text":{"id":"Agile / Scrum","en":"Agile / Scrum"}}]'::jsonb)
+    {"text":{"id":"Agile / Scrum","en":"Agile / Scrum"}}]'::jsonb,
+  '{"path":"about/foto-profil.png","alt":{"id":"Foto profil","en":"Profile photo"},"width":400,"height":500}'::jsonb)
 on conflict (id) do nothing;
 
 -- Koleksi: setiap tabel WAJIB punya minimal satu baris published dan satu draft,
@@ -129,11 +133,16 @@ insert into public.education (institution, degree, year, sort_order, status) val
   ('Institusi Draft Tak Tayang', '{"id":"Draft","en":"Draft"}', 2015, 99, 'draft')
 on conflict do nothing;
 
+-- Satu testimoni berfoto dan satu tanpa: keduanya harus ada supaya cabang
+-- "ada foto" maupun "tanpa foto" sama-sama pernah dieksekusi.
 insert into public.testimonials (quote, author_name, author_role, author_company,
-  sort_order, status) values
+  photo, sort_order, status) values
   ('{"id":"Konsisten menemukan edge case yang terlewat tim lain.","en":"Consistently finds edge cases the rest of the team misses."}',
-   'Rekan Kerja', '{"id":"Engineering Lead","en":"Engineering Lead"}', null, 1, 'published'),
-  ('{"id":"Draft.","en":"Draft."}', 'Penulis Draft Tak Tayang', '{"id":"Draft","en":"Draft"}', null, 99, 'draft')
+   'Rekan Kerja', '{"id":"Engineering Lead","en":"Engineering Lead"}', null,
+   '{"path":"testimonials/rekan-kerja.png","alt":{"id":"Foto Rekan Kerja","en":"Photo of Rekan Kerja"},"width":200,"height":200}'::jsonb,
+   1, 'published'),
+  ('{"id":"Draft.","en":"Draft."}', 'Penulis Draft Tak Tayang', '{"id":"Draft","en":"Draft"}', null,
+   null, 99, 'draft')
 on conflict do nothing;
 
 -- analytics_events sengaja diberi isi meski penulisannya baru dibangun di Fase 3.

@@ -58,13 +58,19 @@ Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fas
 
 Mesin dev memakai Node 20.19.6 sementara CI dan Vercel memakai Node 22, dan `@supabase/supabase-js` mendeklarasikan `engines.node >=22`. Semua hijau, tapi selisih runtime antara lokal dan produksi adalah sumber bug yang muncul belakangan. Naikkan mesin dev ke Node 22 LTS.
 
-## U-4 — Cabang gambar belum pernah tereksekusi  🟡 lunasi di Fase 2
+## U-4 — Cabang gambar belum pernah tereksekusi  ✅ LUNAS (2026-08-18)
 
 **Keadaan:** `about.profile_photo` dan `testimonials.photo` bertipe `MediaRef` dan komponennya sudah menangani keduanya, tapi **tidak ada satu pun test yang menjalankan cabang itu** — seed membiarkan keduanya `null` karena Supabase Storage baru disiapkan di Fase 2, sehingga path gambar apa pun akan 404.
 
 **Kenapa dicatat, bukan didiamkan:** cabang yang tidak pernah dieksekusi bukan cabang yang teruji. Sepanjang Fase 1a-1b sudah tiga kali ditemukan test yang hijau justru karena datanya tidak memungkinkan pemeriksaannya gagal — `analytics_events` yang kosong, `lab_scenarios` yang cuma satu, dan `certifications` yang semua `credential_url`-nya kosong. Ketiganya ditutup dengan menambah variasi ke seed. Yang ini tidak bisa, karena butuh Storage.
 
 **Cara melunasi:** setelah bucket Storage ada di Fase 2, isi kedua kolom itu di seed dengan berkas sungguhan, lalu tambahkan asersi E2E bahwa gambarnya benar-benar dimuat (status 200, bukan sekadar elemen `<img>` ada).
+
+**Dilunasi 2026-08-18.** Bucket `media` dibuat lewat migrasi, dua PNG sungguhan diunggah, dan `seed.sql` kini mengisi `about.profile_photo` serta satu `testimonials.photo` — sehingga `db:reset` tidak mengosongkannya lagi. `tests/e2e/media.spec.ts` memeriksa tiga hal, dan yang ketiga paling mengikat: permintaan gambarnya menjawab 200 dengan content-type gambar, URL-nya dibangun dari object path (D19), dan **`naturalWidth > 0`** — nilai yang hanya terisi kalau peramban benar-benar berhasil men-decode berkasnya, sehingga server yang menjawab 200 dengan halaman error pun tetap tertangkap.
+
+Diverifikasi lewat mutasi: mengarahkan `profile_photo.path` ke berkas yang tidak ada membuat dua test gagal.
+
+Satu testimoni sengaja dibiarkan tanpa foto, supaya cabang "ada foto" dan "tanpa foto" sama-sama pernah dieksekusi.
 
 ## U-3 — Vercel belum tersambung ke GitHub  🟠 lunasi di Fase 1
 

@@ -87,3 +87,14 @@ npm test            # semua di atas, berurutan
 - **Jangan menautkan artefak internal tempat kerja** — report test, dashboard, tiket, atau repo pekerjaan — dari mana pun di proyek ini. Bukti kerja dipakai sebagai angka yang dianonimkan saja.
 - Jangan menyebut nama perusahaan tempat kerja, nama klien, atau ID tiket di mana pun, termasuk di dokumen dan pesan commit (keputusan D5 di spec).
 - Jangan menghapus blok `<!-- BEGIN:nextjs-agent-rules -->` di `AGENTS.md` — `next dev` menulisnya ulang, dan menghapusnya hanya menghasilkan diff yang muncul terus.
+
+### Mutasi yang menyentuh data harus dijalankan dengan build segar
+
+Landing di-prerender (`● /id`, `● /en`). Playwright memakai `reuseExistingServer` secara lokal, jadi mengubah database lalu menjalankan test akan membaca **HTML lama** dan mutasinya tampak tidak berpengaruh — hijau palsu yang meyakinkan.
+
+Sudah dua kali menipu: saat menguji kebocoran draft, dan saat menguji gambar yang rusak. Sebelum uji daya gigit yang mengubah data, selalu:
+
+```bash
+netstat -ano | grep ':3000' | grep LISTENING   # matikan servernya
+rm -rf .next
+```

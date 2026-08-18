@@ -1,3 +1,4 @@
+import { urlMedia } from '@/lib/media'
 import Image from 'next/image'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { SectionHeading } from '@/components/ui/SectionHeading'
@@ -48,7 +49,7 @@ export function Testimonials({
               <div className="flex items-center gap-3">
                 {testimoni.photo ? (
                   <Image
-                    src={testimoni.photo.path}
+                    src={urlMedia(testimoni.photo.path)!}
                     alt={teks(testimoni.photo.alt, locale)}
                     width={testimoni.photo.width}
                     height={testimoni.photo.height}

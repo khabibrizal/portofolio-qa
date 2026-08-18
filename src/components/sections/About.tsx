@@ -1,3 +1,4 @@
+import { urlMedia } from '@/lib/media'
 import Image from 'next/image'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Wrap } from '@/components/ui/Wrap'
@@ -23,7 +24,7 @@ export function About({ about, locale }: { about: AboutData | null; locale: Loca
         <div className="flex aspect-[4/5] items-center justify-center overflow-hidden rounded-xl border border-border bg-linear-to-br from-primary-tint to-border font-mono text-[13px] text-ink-faint">
           {about.profile_photo ? (
             <Image
-              src={about.profile_photo.path}
+              src={urlMedia(about.profile_photo.path)!}
               alt={teks(about.profile_photo.alt, locale)}
               width={about.profile_photo.width}
               height={about.profile_photo.height}
