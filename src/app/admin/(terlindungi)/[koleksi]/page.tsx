@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { TombolUrutkan } from '@/components/admin/TombolUrutkan'
 import { ambilEntri, judulEntri } from '@/lib/admin/entri'
 import { registryKoleksi } from '@/lib/admin/skema'
 
@@ -40,12 +41,18 @@ export default async function HalamanDaftarEntri({
         <p className="text-sm text-ink-faint">Belum ada entri.</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {entri.map((baris) => (
+          {entri.map((baris, i) => (
             <li
               key={baris.id}
               className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface px-5 py-4"
             >
               <div className="flex items-center gap-3">
+                <TombolUrutkan
+                  koleksi={definisi.slug}
+                  id={baris.id}
+                  bisaNaik={i > 0}
+                  bisaTurun={i < entri.length - 1}
+                />
                 <span className="w-8 text-sm text-ink-faint">#{baris.sort_order}</span>
                 <span className="font-medium text-ink">{judulEntri(definisi, baris)}</span>
                 {baris.status === 'draft' ? (
