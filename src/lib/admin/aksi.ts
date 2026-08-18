@@ -42,6 +42,14 @@ export async function masuk(_state: HasilMasuk, formData: FormData): Promise<Has
 /** Server Action logout, dipanggil langsung dari `<form action={keluar}>`. */
 export async function keluar() {
   const supabase = await createClient()
-  await supabase.auth.signOut()
+  // scope: 'local' — HANYA mencabut sesi di browser ini. Default signOut()
+  // Supabase adalah scope 'global', yang mencabut refresh token pengguna di
+  // SEMUA sesi/perangkat sekaligus. Itu ketidaksesuaian dengan tombol
+  // "Keluar" satu perangkat, dan di test E2E lokal (banyak worker paralel,
+  // satu akun admin nyata dipakai bersama) itu konkret: logout di satu test
+  // mencabut sesi test lain yang masih berjalan, membuatnya dialihkan balik
+  // ke /admin/login secara acak — ditemukan saat menambah admin-daftar.spec.ts
+  // (Task 5) yang untuk pertama kalinya menjalankan >1 sesi nyata sekaligus.
+  await supabase.auth.signOut({ scope: 'local' })
   redirect('/admin/login')
 }
