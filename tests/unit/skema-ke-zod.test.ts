@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buatSkemaField, buatSkemaKoleksi } from '@/lib/admin/skema/ke-zod'
+import { buatSkemaField, buatSkemaKoleksi, petaErrorDariZod } from '@/lib/admin/skema/ke-zod'
 import { skillCategories } from '@/lib/admin/skema/skill-categories'
 import type { DefinisiField } from '@/lib/admin/skema/tipe'
 
@@ -175,5 +175,38 @@ describe('buatSkemaKoleksi — skillCategories (skema sesungguhnya)', () => {
       skills: [{ name: '', proficiency_percent: 200, years: 1 }],
     })
     expect(hasil.success).toBe(false)
+  })
+})
+
+describe('petaErrorDariZod', () => {
+  const skema = buatSkemaKoleksi(skillCategories)
+
+  it('meratakan error field terlokalisasi ke jalur "field.bahasa"', () => {
+    const hasil = skema.safeParse({ category_name: { id: '', en: '' }, skills: [] })
+    if (hasil.success) throw new Error('seharusnya gagal validasi')
+
+    const peta = petaErrorDariZod(hasil.error)
+    expect(peta['category_name.id']).toBe('Wajib diisi')
+    expect(peta['category_name.en']).toBe('Wajib diisi')
+  })
+
+  it('meratakan error baris repeater ke jalur "field.indeks.subfield"', () => {
+    const hasil = skema.safeParse({
+      category_name: { id: 'a', en: 'b' },
+      skills: [
+        { name: 'React', proficiency_percent: 90, years: 3 },
+        { name: '', proficiency_percent: 90, years: 1 },
+        { name: 'Vue', proficiency_percent: 999, years: 1 },
+      ],
+    })
+    if (hasil.success) throw new Error('seharusnya gagal validasi')
+
+    const peta = petaErrorDariZod(hasil.error)
+    // Baris ke-1 (indeks 1) valid semua — tidak boleh punya entri error.
+    expect(peta['skills.0.name']).toBeUndefined()
+    // Baris kedua (indeks 1): nama kosong.
+    expect(peta['skills.1.name']).toBe('Wajib diisi')
+    // Baris ketiga (indeks 2): persentase di luar batas.
+    expect(peta['skills.2.proficiency_percent']).toBe('Maksimal 100')
   })
 })

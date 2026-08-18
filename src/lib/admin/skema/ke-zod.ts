@@ -109,3 +109,23 @@ function takTerduga(jenis: never): never {
 export function buatSkemaKoleksi(definisi: DefinisiKoleksi) {
   return buatSkemaBaris(definisi.field)
 }
+
+/**
+ * Meratakan `ZodError` jadi peta jalur -> pesan (mis. `{"category_name.en":
+ * "Wajib diisi", "skills.2.name": "Wajib diisi"}`). Kalau ada lebih dari satu
+ * isu di jalur yang sama, isu pertama yang menang.
+ *
+ * `FormSkema` memakai peta ini untuk mencocokkan error ke field yang tepat —
+ * termasuk baris keberapa di repeater dan sisi bahasa mana di field
+ * terlokalisasi — persis yang membuat pesan error repeater menyebut indeks
+ * barisnya (lihat test Task 3) dan yang membuat FieldTerlokalisasi bisa
+ * menyorot tab bahasa yang salah.
+ */
+export function petaErrorDariZod(error: z.ZodError): Record<string, string> {
+  const peta: Record<string, string> = {}
+  for (const issue of error.issues) {
+    const kunci = issue.path.join('.')
+    if (!(kunci in peta)) peta[kunci] = issue.message
+  }
+  return peta
+}
