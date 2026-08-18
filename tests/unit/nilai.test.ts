@@ -147,3 +147,33 @@ describe('nilaiAwalKoleksi', () => {
     expect(petaDenganDefault['cta_primary.link']).toBe('URL tidak valid')
   })
 })
+
+describe('nilaiAwalField untuk media dan berkas', () => {
+  it('media mendapat bentuk objek lengkap dengan alt dwibahasa', () => {
+    const bentuk = nilaiAwalField({ nama: 'profile_photo', label: 'Foto', jenis: 'media' })
+    expect(bentuk).toEqual({ path: '', alt: { id: '', en: '' } })
+  })
+
+  it('media wajib yang kosong menempatkan error di jalur alt, bukan di jalur field', () => {
+    // Inilah alasan bentuk kosongnya harus benar sejak awal. Kalau nilai awal
+    // bukan objek, Zod gagal di jalur ['profile_photo'] dan input alt yang
+    // bersangkutan tidak pernah menerima errornya — pengisi form tak melihat
+    // peringatan apa pun di bahasa yang terlewat.
+    const definisi: DefinisiKoleksi = {
+      slug: 'uji', tabel: 'uji', label: 'Uji', labelTunggal: 'Uji',
+      kolomJudul: 'profile_photo',
+      field: [{ nama: 'profile_photo', label: 'Foto', jenis: 'media', wajib: true }],
+    }
+    const hasil = buatSkemaKoleksi(definisi).safeParse(nilaiAwalKoleksi(definisi))
+    expect(hasil.success).toBe(false)
+    if (hasil.success) return
+
+    const jalur = hasil.error.issues.map((i) => i.path.join('.'))
+    expect(jalur.some((j) => j.startsWith('profile_photo.alt'))).toBe(true)
+  })
+
+  it('berkas mendapat string kosong, bukan objek', () => {
+    const bentuk = nilaiAwalField({ nama: 'resume_pdf', label: 'CV', jenis: 'berkas' })
+    expect(bentuk).toBe('')
+  })
+})

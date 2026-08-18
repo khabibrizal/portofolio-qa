@@ -73,6 +73,19 @@ export function nilaiAwalField(definisi: DefinisiField): unknown {
       return []
     case 'angka':
       return undefined
+    case 'media':
+      // Alasannya sama dengan 'terlokalisasi' di atas, dan penting justru
+      // untuk aksesibilitas: kalau nilai awalnya bukan bentuk objek yang
+      // benar, error "alt belum diisi" mendarat di jalur field itu sendiri
+      // (mis. "profile_photo") alih-alih di jalur anaknya
+      // ("profile_photo.alt.en") — sehingga input alt yang bersangkutan tidak
+      // pernah menerima errornya, dan pengisi form tak melihat peringatan
+      // apa pun di bahasa yang terlewat.
+      return { path: '', alt: { id: '', en: '' } }
+    case 'berkas':
+      // 'berkas' menyimpan string biasa (object path), bukan objek —
+      // kolom seperti site_settings.resume_pdf bertipe text, bukan JSONB.
+      return ''
     case 'grup': {
       // Sama seperti alasan 'terlokalisasi' di atas, tapi rekursif: setiap
       // field anak grup diisi bentuk kosongnya SENDIRI (lewat panggilan
@@ -100,7 +113,11 @@ export function nilaiAwalField(definisi: DefinisiField): unknown {
  */
 export function nilaiAwalKoleksi(
   definisi: DefinisiKoleksi,
-  nilaiAwal: Record<string, unknown>,
+  // Default `{}` karena kasus "entri baru" memang tidak punya nilai awal.
+  // Sebelumnya wajib, dan itu mengundang pemanggil melewatkannya lalu jatuh
+  // dengan TypeError di dalam fungsi ini alih-alih mendapat bentuk kosong
+  // yang benar.
+  nilaiAwal: Record<string, unknown> = {},
 ): Record<string, unknown> {
   const hasil: Record<string, unknown> = {}
   for (const field of definisi.field) {

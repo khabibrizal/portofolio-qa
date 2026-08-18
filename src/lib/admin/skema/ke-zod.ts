@@ -72,6 +72,28 @@ function skemaUntukJenis(definisi: DefinisiField): z.ZodTypeAny {
       // tidak pernah muncul tanpa menyebut anak mana yang salah.
       return buatSkemaBaris(definisi.anak ?? [])
 
+    case 'media':
+      // Objek `{ path, alt: { id, en }, width, height }` (D19/D20). `width`
+      // dan `height` sengaja `.optional()` di sini terlepas dari `wajib`
+      // field-nya: keduanya dibaca dari berkas oleh FieldMedia (lihat
+      // `bacaDimensi` di sana), bukan diketik pengguna, jadi bukan sesuatu
+      // yang bisa "lupa diisi" — memaksanya wajib cuma akan menolak nilai
+      // sebelum berkas sempat terunggah padahal belum ada apa pun yang salah
+      // dari sisi pengguna. Yang benar-benar wajib untuk aksesibilitas (Fase
+      // 4) adalah `path` dan KEDUA bahasa `alt` — itu yang diperiksa
+      // `superRefine` di `skemaMedia` di bawah, dan path issue-nya otomatis
+      // menyebut anaknya lewat `ctx.addIssue({ path: [...] })` persis pola
+      // `skemaTerlokalisasi`.
+      return skemaMedia(definisi.wajib ?? false)
+
+    case 'berkas':
+      // Object path Storage sebagai string BIASA — BUKAN objek seperti
+      // 'media' (D20). Kolom seperti `site_settings.resume_pdf` bertipe
+      // `text`, jadi membungkusnya jadi objek di sini justru akan membuat
+      // Server Action gagal menyimpannya. Tidak punya alt maupun dimensi
+      // karena PDF bukan gambar.
+      return definisi.wajib ? z.string().min(1, 'Wajib diisi') : z.string()
+
     default:
       return takTerduga(definisi.jenis)
   }
@@ -94,6 +116,37 @@ function skemaTerlokalisasi(wajib: boolean) {
     }
     if (!nilai.en.trim()) {
       ctx.addIssue({ code: 'custom', path: ['en'], message: 'Wajib diisi' })
+    }
+  })
+}
+
+/**
+ * Sama pola dengan `skemaTerlokalisasi` di atas, tapi untuk bentuk `media`
+ * (D19/D20): `path` dan kedua sisi `alt` masing-masing ditandai lewat
+ * `path` issue-nya SENDIRI ketika field-nya wajib — bukan cuma satu error
+ * generik di level field media itu sendiri — supaya `FieldMedia` bisa
+ * menyorot input mana yang belum diisi (path kosong = belum ada berkas,
+ * alt kosong = aksesibilitas belum lengkap), persis kebutuhan Fase 4.
+ */
+function skemaMedia(wajib: boolean) {
+  const dasar = z.object({
+    path: z.string(),
+    alt: z.object({ id: z.string(), en: z.string() }),
+    width: z.number().optional(),
+    height: z.number().optional(),
+  })
+
+  if (!wajib) return dasar
+
+  return dasar.superRefine((nilai, ctx) => {
+    if (!nilai.path.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['path'], message: 'Wajib diisi' })
+    }
+    if (!nilai.alt.id.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['alt', 'id'], message: 'Wajib diisi' })
+    }
+    if (!nilai.alt.en.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['alt', 'en'], message: 'Wajib diisi' })
     }
   })
 }

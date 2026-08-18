@@ -208,3 +208,59 @@ export async function urutkan(
 
   revalidasiLanding()
 }
+
+export type HasilUnggah = { path: string } | { error: string }
+
+const MIME_GAMBAR_DIIZINKAN = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const MIME_PDF = 'application/pdf'
+const UKURAN_MAKS_GAMBAR = 5 * 1024 * 1024 // 5MB
+const UKURAN_MAKS_PDF = 10 * 1024 * 1024 // 10MB
+
+/**
+ * Server Action unggah berkas ke bucket Storage `media` — dipakai
+ * `FieldMedia` (gambar, lewat `alt`/dimensi yang dikelola di komponen) dan
+ * `FieldBerkas` (PDF, lewat `unggah` yang sama).
+ *
+ * WAJIB memvalidasi jenis MIME dan ukuran DI SINI, bukan cuma lewat
+ * `accept` pada `<input type="file">` di klien: Server Action bisa dipanggil
+ * langsung tanpa melewati form atau komponen sama sekali (D16 — sama
+ * alasannya dengan `simpan` di atas), jadi validasi klien hanyalah
+ * kenyamanan UX, bukan penjagaan sungguhan. Klien BISA mengirim `File`
+ * apa pun dengan `type`/`name` apa pun yang dikarang — jadi keduanya
+ * diperiksa ulang terhadap daftar putih di sini, bukan dipercaya.
+ */
+export async function unggahBerkas(formData: FormData): Promise<HasilUnggah> {
+  const berkas = formData.get('berkas')
+  if (!(berkas instanceof File) || berkas.size === 0) {
+    return { error: 'Berkas tidak ditemukan.' }
+  }
+
+  const jenisGambar = MIME_GAMBAR_DIIZINKAN.has(berkas.type)
+  const jenisPdf = berkas.type === MIME_PDF
+
+  if (!jenisGambar && !jenisPdf) {
+    return { error: `Jenis berkas "${berkas.type || 'tidak dikenal'}" tidak didukung.` }
+  }
+
+  const batasUkuran = jenisPdf ? UKURAN_MAKS_PDF : UKURAN_MAKS_GAMBAR
+  if (berkas.size > batasUkuran) {
+    return { error: `Ukuran berkas melebihi batas maksimum ${Math.round(batasUkuran / (1024 * 1024))}MB.` }
+  }
+
+  // Nama acak (bukan nama asli berkas): nama asli bisa memuat karakter yang
+  // tidak sah untuk object path Storage (spasi, unicode, `../`), dan dua
+  // pengguna mengunggah berkas bernama sama tidak boleh saling menimpa.
+  const ekstensi = berkas.name.includes('.') ? berkas.name.split('.').pop() : undefined
+  const namaBerkas = ekstensi ? `${crypto.randomUUID()}.${ekstensi}` : crypto.randomUUID()
+  const path = `unggahan/${namaBerkas}`
+
+  const supabase = await createClient()
+  const { error } = await supabase.storage.from('media').upload(path, berkas, {
+    contentType: berkas.type,
+    upsert: false,
+  })
+
+  if (error) return { error: `Gagal mengunggah: ${error.message}` }
+
+  return { path }
+}

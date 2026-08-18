@@ -10,6 +10,8 @@ export type JenisField =
   | 'daftar-teks'
   | 'repeater'
   | 'grup'
+  | 'media'
+  | 'berkas'
 
 export type DefinisiField = {
   nama: string

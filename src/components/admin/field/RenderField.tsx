@@ -6,6 +6,8 @@ import { FieldPilihan } from './FieldPilihan'
 import { FieldTerlokalisasi } from './FieldTerlokalisasi'
 import { FieldRepeater } from './FieldRepeater'
 import { FieldGrup } from './FieldGrup'
+import { FieldMedia, type NilaiMedia } from './FieldMedia'
+import { FieldBerkas } from './FieldBerkas'
 
 export type OnChangeField = (jalur: Jalur, nilaiBaru: unknown) => void
 export type PetaError = Record<string, string>
@@ -113,6 +115,35 @@ export function RenderField({
           : kosong
       return <FieldGrup definisi={definisi} jalur={jalur} nilai={objek} errors={errors} onChange={onChange} />
     }
+
+    case 'media': {
+      // Sama pola dengan case 'grup' di atas: bentuk kosong yang benar
+      // (path/alt/width/height) disiapkan di sini, bukan cuma `nilai ?? {}`
+      // mentah, supaya FieldMedia yang nilainya `undefined` sejak awal (mis.
+      // koleksi baru yang belum memakai `nilaiAwalKoleksi`) tetap bisa
+      // langsung diisi tanpa melempar saat membaca `nilai.alt.id`.
+      const objek = (nilai ?? {}) as Partial<NilaiMedia>
+      const nilaiMedia: NilaiMedia = {
+        path: objek.path ?? '',
+        alt: { id: objek.alt?.id ?? '', en: objek.alt?.en ?? '' },
+        width: objek.width,
+        height: objek.height,
+      }
+      return <FieldMedia definisi={definisi} jalur={jalur} nilai={nilaiMedia} errors={errors} onChange={onChange} />
+    }
+
+    case 'berkas':
+      // Object path Storage sebagai string BIASA (D19/D20) — bukan objek
+      // seperti 'media', jadi cukup pola yang sama dengan case 'teks' di atas.
+      return (
+        <FieldBerkas
+          definisi={definisi}
+          jalur={jalur}
+          nilai={typeof nilai === 'string' ? nilai : ''}
+          error={kunciError}
+          onChange={onChange}
+        />
+      )
 
     case 'daftar-teks': {
       // Belum ada komponen khusus untuk 'daftar-teks' di Fase 2a — tidak
