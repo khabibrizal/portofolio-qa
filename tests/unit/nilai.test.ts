@@ -76,6 +76,47 @@ describe('nilaiAwalKoleksi', () => {
     expect(hasil.skills).toEqual([])
   })
 
+  it('regresi: null dari database diperlakukan sama seperti kunci yang hilang, bukan dipakai apa adanya', () => {
+    // Ditemukan di koleksi singleton Task 3: site_settings.og_image/favicon/
+    // resume_pdf memang `null` di database untuk kolom yang belum pernah
+    // diisi (bukan kunci yang hilang — kuncinya ADA, nilainya `null`).
+    const definisi: DefinisiKoleksi = {
+      slug: 'contoh-nullable',
+      tabel: 'contoh_nullable',
+      label: 'Contoh',
+      labelTunggal: 'Contoh',
+      kolomJudul: 'catatan',
+      field: [
+        { nama: 'catatan', label: 'Catatan', jenis: 'teks' },
+        { nama: 'tautan', label: 'Tautan', jenis: 'url' },
+        { nama: 'berkas', label: 'Berkas', jenis: 'berkas' },
+        { nama: 'gambar', label: 'Gambar', jenis: 'media' },
+      ],
+    }
+
+    const hasil = nilaiAwalKoleksi(definisi, {
+      catatan: null,
+      tautan: null,
+      berkas: null,
+      gambar: null,
+    })
+
+    // Bentuk kosong yang benar per jenis — BUKAN `null` mentah.
+    expect(hasil.catatan).toBe('')
+    expect(hasil.tautan).toBe('')
+    expect(hasil.berkas).toBe('')
+    expect(hasil.gambar).toEqual({ path: '', alt: { id: '', en: '' } })
+
+    // Bukti praktis: skema Zod field TIDAK wajib dibungkus `.optional()`,
+    // yang HANYA menerima `undefined` — bukan `null`. Tanpa perbaikan di
+    // `nilaiAwalKoleksi`, menyimpan ulang koleksi ini TANPA menyentuh satu
+    // pun field kosongnya (kasus paling umum: ubah satu field lalu klik
+    // Simpan) akan selalu gagal validasi, walau tidak ada satu pun field di
+    // sini yang wajib diisi.
+    const validasi = buatSkemaKoleksi(definisi).safeParse(hasil)
+    expect(validasi.success).toBe(true)
+  })
+
   it('regresi: tanpa ini, field terlokalisasi wajib yang sama sekali kosong gagal di jalur field itu sendiri (bukan .id/.en), sehingga tidak ada error per-bahasa yang bisa ditampilkan', () => {
     const skema = buatSkemaKoleksi(skillCategories)
 

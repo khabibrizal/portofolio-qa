@@ -1,4 +1,7 @@
 import type { DefinisiKoleksi } from './tipe'
+import { about } from './about'
+import { hero } from './hero'
+import { siteSettings } from './site-settings'
 import { skillCategories } from './skill-categories'
 
 /**
@@ -9,6 +12,9 @@ import { skillCategories } from './skill-categories'
  * bukan dari daftar keras di komponen.
  */
 export const registryKoleksi: Record<string, DefinisiKoleksi> = {
+  [siteSettings.slug]: siteSettings,
+  [hero.slug]: hero,
+  [about.slug]: about,
   [skillCategories.slug]: skillCategories,
 }
 

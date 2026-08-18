@@ -110,6 +110,21 @@ export function nilaiAwalField(definisi: DefinisiField): unknown {
  * dari `nilaiAwal` kalau field itu memang sudah punya nilai (mis. saat
  * mengedit entri lama), atau bentuk kosong yang benar (`nilaiAwalField`)
  * kalau belum (mis. saat membuat entri baru).
+ *
+ * `null` diperlakukan SAMA seperti kunci yang hilang sama sekali — bukan
+ * dipakai apa adanya. Ditemukan lewat koleksi singleton Task 3
+ * (`site_settings.og_image`/`favicon`/`resume_pdf` memang `null` di database
+ * untuk kolom yang belum pernah diisi — lihat `supabase/seed.sql`): tanpa
+ * pengecualian ini, baris `null` mentah dari database akan mengalir apa
+ * adanya ke `nilai` form, dan skema Zod untuk field TIDAK wajib (`teks`,
+ * `url`, `berkas`, `media`, ...) semuanya dibungkus `.optional()` — yang
+ * cuma menerima `undefined`, BUKAN `null`. Akibatnya menyimpan ULANG
+ * singleton apa pun tanpa menyentuh field kosongnya sama sekali (kasus
+ * paling umum: mengubah satu field lalu klik Simpan) akan selalu gagal
+ * dengan "Data tidak valid", walau field itu sendiri tidak wajib diisi.
+ * Bentuk kosong dari `nilaiAwalField` (mis. `''` untuk teks/url/berkas,
+ * `{path:'', alt:{id:'',en:''}}` untuk media) sudah pasti valid untuk field
+ * yang sama sekali tidak wajib, jadi ini pengganti yang aman.
  */
 export function nilaiAwalKoleksi(
   definisi: DefinisiKoleksi,
@@ -121,7 +136,8 @@ export function nilaiAwalKoleksi(
 ): Record<string, unknown> {
   const hasil: Record<string, unknown> = {}
   for (const field of definisi.field) {
-    hasil[field.nama] = field.nama in nilaiAwal ? nilaiAwal[field.nama] : nilaiAwalField(field)
+    const adaNilai = field.nama in nilaiAwal && nilaiAwal[field.nama] !== null
+    hasil[field.nama] = adaNilai ? nilaiAwal[field.nama] : nilaiAwalField(field)
   }
   return hasil
 }

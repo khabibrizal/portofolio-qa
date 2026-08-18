@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { TombolUrutkan } from '@/components/admin/TombolUrutkan'
-import { ambilEntri, judulEntri } from '@/lib/admin/entri'
+import { ID_BARIS_SINGLETON, ambilEntri, judulEntri } from '@/lib/admin/entri'
 import { registryKoleksi } from '@/lib/admin/skema'
 
 /**
@@ -22,6 +22,13 @@ export default async function HalamanDaftarEntri({
 
   const definisi = registryKoleksi[koleksi]
   if (!definisi) notFound()
+
+  // D21 — koleksi singleton tidak punya daftar sama sekali: satu-satunya
+  // baris langsung dibuka lewat rute form `[koleksi]/[id]`, tanpa perlu
+  // menampilkan daftar berisi satu entri lalu memaksa satu klik lagi. Ini
+  // otomatis berlaku untuk koleksi singleton MANA PUN yang terdaftar di
+  // registry — tidak ada nama koleksi yang disebut di sini.
+  if (definisi.singleton) redirect(`/admin/${definisi.slug}/${ID_BARIS_SINGLETON}`)
 
   const entri = await ambilEntri(definisi.tabel)
 

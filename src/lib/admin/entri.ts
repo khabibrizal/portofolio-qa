@@ -4,6 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 
 export type StatusEntri = 'draft' | 'published'
 
+/**
+ * ID baris satu-satunya untuk koleksi `singleton: true` (D21) — `site_settings`,
+ * `hero`, dan `about` masing-masing punya `CHECK (id = 1)` di migrasinya
+ * (`supabase/migrations/20260818000002_singleton.sql`), jadi barisnya SELALU
+ * `1`, tidak pernah dibuat/dihapus. Rute `[koleksi]` memakai konstanta ini
+ * (bukan mengulang literal `'1'` di beberapa berkas) untuk langsung membuka
+ * form tanpa daftar.
+ */
+export const ID_BARIS_SINGLETON = '1'
+
 /** Satu baris entri koleksi apa pun — bentuknya generik karena field di luar
  * `id`/`status`/`sort_order` berbeda-beda per koleksi (lihat `DefinisiKoleksi`). */
 export type BarisEntri = {

@@ -24,6 +24,14 @@ export default async function HalamanFormEntri({
   const definisi = registryKoleksi[koleksi]
   if (!definisi) notFound()
 
+  // D21 — koleksi singleton tidak pernah punya rute "entri baru": baris
+  // satu-satunya sudah selalu ada (dibuat lewat migrasi/seed, bukan lewat
+  // form ini), jadi `/admin/<slug>/baru` untuk koleksi singleton bukan
+  // keadaan yang sah. 404, bukan diteruskan ke `simpan()` yang akan mencoba
+  // INSERT dengan `sort_order` — kolom yang sama sekali tidak ada di tabel
+  // singleton — dan gagal dengan error database yang membingungkan.
+  if (definisi.singleton && id === 'baru') notFound()
+
   let entri: BarisEntri | null = null
 
   if (id !== 'baru') {
@@ -50,11 +58,19 @@ export default async function HalamanFormEntri({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">
-          {id === 'baru' ? `Tambah ${definisi.labelTunggal}` : `Ubah ${definisi.labelTunggal}`}
+          {definisi.singleton
+            ? definisi.label
+            : id === 'baru'
+              ? `Tambah ${definisi.labelTunggal}`
+              : `Ubah ${definisi.labelTunggal}`}
         </h1>
-        <Link href={`/admin/${definisi.slug}`} className="text-sm text-ink-soft underline">
-          Kembali ke daftar
-        </Link>
+        {/* D21 — koleksi singleton tidak punya daftar untuk dikembalikan;
+            "Kembali ke daftar" cuma masuk akal untuk koleksi biasa. */}
+        {!definisi.singleton && (
+          <Link href={`/admin/${definisi.slug}`} className="text-sm text-ink-soft underline">
+            Kembali ke daftar
+          </Link>
+        )}
       </div>
 
       <FormEntriKoleksi definisi={definisi} id={id} entri={entri} />

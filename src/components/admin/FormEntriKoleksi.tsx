@@ -92,7 +92,12 @@ export function FormEntriKoleksi({
 
   return (
     <div className="flex flex-col gap-4">
-      {entri && (
+      {/* D21 — koleksi singleton (`site_settings`, `hero`, `about`, ...) tidak
+          punya kolom `status`/`sort_order` sama sekali (satu-satunya barisnya
+          selalu ada, tidak pernah draft/terbit/dihapus terpisah) — badge dan
+          tombol terbitkan/jadikan-draft/hapus di bawah ini konsep yang murni
+          milik koleksi biasa, jadi disembunyikan sepenuhnya untuk singleton. */}
+      {!definisi.singleton && entri && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
           {entri.status === 'draft' ? (
             <span className="rounded-full border border-major px-2.5 py-1 font-mono text-[11px] font-semibold text-major">
