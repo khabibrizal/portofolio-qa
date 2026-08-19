@@ -92,6 +92,16 @@ test('URL gambar dibangun dari object path, bukan disimpan penuh di database', a
 
   await page.goto('/id')
   const src = await page.locator('#tentang img').first().getAttribute('src')
+  expect(src, '<img> di #tentang tanpa src').toBeTruthy()
+
+  // Gambarnya kini dilewatkan pengoptimal Next, jadi src-nya berbentuk
+  // `/_next/image?url=<URL asli ter-encode>&w=...`. URL aslinya diambil dari
+  // parameter itu — mengasersi src mentah akan gagal hanya karena tanda "/"
+  // berubah jadi "%2F", dan kegagalan seperti itu tidak menandai apa pun.
+  const asal = src!.startsWith('/_next/image')
+    ? new URL(src!, 'http://localhost').searchParams.get('url')
+    : src
+  expect(asal, 'parameter url pada /_next/image kosong').toBeTruthy()
 
   // Keputusan D19: database menyimpan object path; URL publiknya dibangun
   // helper urlMedia(). Kalau suatu saat ada yang menyimpan URL penuh ke kolom
@@ -102,8 +112,8 @@ test('URL gambar dibangun dari object path, bukan disimpan penuh di database', a
   // mengunci 'about/foto-profil.png' dari seed, lalu gagal ketika pemiliknya
   // mengunggah fotonya sendiri lewat /admin — padahal itu justru bukti fitur
   // unggahnya bekerja.
-  expect(src).toContain('/storage/v1/object/public/media/')
-  expect(src).toContain(path!)
+  expect(asal!).toContain('/storage/v1/object/public/media/')
+  expect(asal!).toContain(path!)
 
   // Dan yang tersimpan di database memang PATH, bukan URL penuh.
   expect(path!, 'kolom media menyimpan URL penuh, bukan object path').not.toContain('http')

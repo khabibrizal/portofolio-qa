@@ -53,7 +53,10 @@ export function Testimonials({
                     alt={teks(testimoni.photo.alt, locale)}
                     width={testimoni.photo.width}
                     height={testimoni.photo.height}
-                    unoptimized
+                    // Avatar selalu 38px di semua breakpoint — dinyatakan
+                    // eksplisit supaya yang diunduh seukuran itu, bukan
+                    // seukuran berkas aslinya.
+                    sizes="38px"
                     className="h-[38px] w-[38px] rounded-full object-cover"
                   />
                 ) : (

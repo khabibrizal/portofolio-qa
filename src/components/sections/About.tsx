@@ -28,7 +28,11 @@ export function About({ about, locale }: { about: AboutData | null; locale: Loca
               alt={teks(about.profile_photo.alt, locale)}
               width={about.profile_photo.width}
               height={about.profile_photo.height}
-              unoptimized
+              // Kolom foto adalah 0.8fr dari grid [0.8fr_1.2fr] di layar >=640px,
+              // jadi sekitar 40vw; di bawah itu ia selebar kontainer. Tanpa
+              // `sizes`, next/image mengasumsikan 100vw dan mengunduh berkas
+              // jauh lebih besar daripada yang pernah ditampilkan.
+              sizes="(min-width: 640px) 40vw, 100vw"
               className="h-full w-full object-cover"
             />
           ) : (

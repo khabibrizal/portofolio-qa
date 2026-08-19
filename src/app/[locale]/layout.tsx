@@ -15,9 +15,21 @@ const ibmPlexSans = IBM_Plex_Sans({
   variable: '--font-ibm-plex-sans', subsets: ['latin'],
   weight: ['400', '500', '600', '700'], display: 'swap',
 })
+/**
+ * IBM Plex Mono adalah SATU-SATUNYA dari tiga keluarga di sini yang berkas
+ * fontnya statis per bobot — Space Grotesk dan IBM Plex Sans keduanya font
+ * variabel, satu berkas melayani seluruh rentang bobotnya, sehingga menambah
+ * atau mengurangi bobot yang dideklarasikan tidak mengubah berat unduhan sama
+ * sekali.
+ *
+ * Untuk mono, tiap bobot adalah berkas ~10 KB tersendiri. Bobot 500 hanya
+ * dipakai dua kali (tombol di Automation Lab) dan sudah dinaikkan ke 600, jadi
+ * mendeklarasikannya berarti mengunduh satu berkas penuh demi selisih tebal
+ * yang tidak terlihat pada teks 13px.
+ */
 const ibmPlexMono = IBM_Plex_Mono({
   variable: '--font-ibm-plex-mono', subsets: ['latin'],
-  weight: ['400', '500', '600'], display: 'swap',
+  weight: ['400', '600'], display: 'swap',
 })
 
 export function generateStaticParams() {

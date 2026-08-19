@@ -202,8 +202,8 @@ export function LabRunner({
             onClick={() => pilihTab(i)}
             className={
               i === activeIndex
-                ? 'rounded-lg border border-primary bg-primary px-[18px] py-2.5 font-mono text-[13px] font-medium text-white'
-                : 'rounded-lg border border-border bg-surface px-[18px] py-2.5 font-mono text-[13px] font-medium text-ink-soft hover:text-primary'
+                ? 'rounded-lg border border-primary bg-primary px-[18px] py-2.5 font-mono text-[13px] font-semibold text-white'
+                : 'rounded-lg border border-border bg-surface px-[18px] py-2.5 font-mono text-[13px] font-semibold text-ink-soft hover:text-primary'
             }
           >
             {scenario.frameworkName}
