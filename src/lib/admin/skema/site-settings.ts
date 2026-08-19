@@ -39,6 +39,21 @@ export const siteSettings: DefinisiKoleksi = {
         { nilai: 'unavailable', label: 'Tidak tersedia' },
       ],
     },
+    {
+      nama: 'location',
+      label: 'Domisili',
+      jenis: 'teks',
+      petunjuk: 'Tampil di blok kontak CV, mis. "Sidoarjo, Indonesia".',
+    },
+    {
+      nama: 'languages',
+      label: 'Bahasa',
+      jenis: 'repeater',
+      anak: [
+        { nama: 'name', label: 'Bahasa', jenis: 'teks', wajib: true },
+        { nama: 'level', label: 'Tingkat', jenis: 'teks', wajib: true },
+      ],
+    },
     { nama: 'contact_email', label: 'Email Kontak', jenis: 'teks', wajib: true },
     { nama: 'whatsapp_number', label: 'Nomor WhatsApp', jenis: 'teks' },
     { nama: 'linkedin_url', label: 'URL LinkedIn', jenis: 'url' },

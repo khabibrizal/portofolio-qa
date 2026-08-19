@@ -2,6 +2,7 @@ import { Wrap } from '@/components/ui/Wrap'
 import type { Hero as HeroData } from '@/lib/content/types'
 import type { Locale } from '@/lib/i18n/locales'
 import { teks } from '@/lib/i18n/resolve'
+import { tautanLokal } from '@/lib/i18n/tautan'
 
 const EYEBROW = 'QA Engineer Portfolio'
 
@@ -48,14 +49,14 @@ export function Hero({ hero, locale }: { hero: HeroData | null; locale: Locale }
 
           <div className="mb-10 flex flex-wrap gap-3.5">
             <a
-              href={hero.cta_primary.link}
+              href={tautanLokal(hero.cta_primary.link, locale)}
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-[14.5px] font-semibold text-white"
             >
               {teks(hero.cta_primary.label, locale)}
             </a>
             {hero.cta_secondary ? (
               <a
-                href={hero.cta_secondary.link}
+                href={tautanLokal(hero.cta_secondary.link, locale)}
                 className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
               >
                 {teks(hero.cta_secondary.label, locale)}

@@ -25,8 +25,13 @@ export type SiteSettings = {
   final_cta_headline: LocalizedText
   final_cta_subtext: LocalizedText
   copyright_text: LocalizedText
+  /** Domisili yang tampil di blok kontak CV. */
+  location: string | null
+  languages: Bahasa[]
   updated_at: string
 }
+
+export type Bahasa = { name: string; level: string }
 
 export type Tautan = { label: LocalizedText; link: string }
 export type Statistik = { label: LocalizedText; value: string }

@@ -38,7 +38,7 @@ async function singleton<T>(tabel: string, kolom: string): Promise<T | null> {
 // menyalin daftar kolom secara terpisah yang bisa diam-diam menyimpang dari
 // yang landing pakai begitu satu field ditambah/dihapus di sini.
 export const KOLOM_SITE_SETTINGS =
-  'site_title, meta_description, og_image, favicon, availability_status, contact_email, whatsapp_number, linkedin_url, github_url, resume_pdf, final_cta_headline, final_cta_subtext, copyright_text, updated_at'
+  'site_title, meta_description, og_image, favicon, availability_status, contact_email, whatsapp_number, linkedin_url, github_url, resume_pdf, final_cta_headline, final_cta_subtext, copyright_text, location, languages, updated_at'
 
 export const KOLOM_HERO =
   'full_name, role_title, short_intro, key_stats, status_checks, cta_primary, cta_secondary'

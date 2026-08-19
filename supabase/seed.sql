@@ -1,11 +1,14 @@
 insert into public.site_settings (id, site_title, meta_description, availability_status,
   contact_email, whatsapp_number, linkedin_url, github_url,
+  location, languages,
   final_cta_headline, final_cta_subtext, copyright_text)
 values (1,
   '{"id":"Portofolio QA Engineer","en":"QA Engineer Portfolio"}',
   '{"id":"QA Engineer dengan pengalaman manual & automation testing lintas web, mobile, dan API.","en":"QA Engineer experienced in manual & automation testing across web, mobile, and API."}',
   'open', 'kontak@contoh.dev', '+628000000000',
   'https://www.linkedin.com/in/contoh', 'https://github.com/contoh',
+  'Kota, Indonesia',
+  '[{"name":"Indonesia","level":"Native"},{"name":"English","level":"Basic"}]'::jsonb,
   '{"id":"Siap membantu tim kamu rilis dengan lebih tenang.","en":"Ready to help your team ship with confidence."}',
   '{"id":"Terbuka untuk peluang full-time maupun kolaborasi proyek freelance.","en":"Open to full-time roles and freelance collaboration."}',
   '{"id":"© 2026","en":"© 2026"}')
@@ -25,7 +28,7 @@ values (1, 'Nama Lengkap',
     {"label":{"id":"API Testing","en":"API Testing"},"status":"pass","duration_label":"190ms"},
     {"label":{"id":"Ketersediaan","en":"Availability"},"status":"pass","duration_label":"Open"}]'::jsonb,
   '{"label":{"id":"Hubungi Saya","en":"Contact Me"},"link":"#kontak"}'::jsonb,
-  '{"label":{"id":"Unduh CV","en":"Download CV"},"link":"#"}'::jsonb)
+  '{"label":{"id":"Unduh CV","en":"Download CV"},"link":"/cv"}'::jsonb)
 on conflict (id) do nothing;
 
 -- profile_photo diisi: cabang <Image> di About.tsx tidak pernah dieksekusi test
