@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { ambilSiteSettings } from '@/lib/content/queries'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
 import { teks } from '@/lib/i18n/resolve'
-import { KONTEN_MASIH_CONTOH } from '@/lib/seo'
+import { KONTEN_MASIH_CONTOH, situsUrl } from '@/lib/seo'
 import '../globals.css'
 
 const spaceGrotesk = Space_Grotesk({
@@ -37,6 +37,11 @@ export async function generateMetadata({
 
 
   return {
+    // Tanpa metadataBase, canonical dan og:image tetap relatif dan ikut host
+    // yang kebetulan diakses — termasuk *.vercel.app dan apex yang seharusnya
+    // dialihkan. Mesin pencari dan pratayang tautan akan melihat alamat
+    // berbeda-beda untuk halaman yang sama.
+    metadataBase: new URL(situsUrl()),
     robots: KONTEN_MASIH_CONTOH ? { index: false, follow: false } : undefined,
     title: teks(settings?.site_title, locale) || 'Portofolio QA Engineer',
     description: teks(settings?.meta_description, locale) || undefined,

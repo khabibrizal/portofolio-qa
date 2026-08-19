@@ -24,6 +24,10 @@ export const KONTEN_MASIH_CONTOH = true
  * Vercel menyediakan `VERCEL_PROJECT_PRODUCTION_URL` tanpa skema.
  */
 export function situsUrl(): string {
+  // NEXT_PUBLIC_SITUS_URL sengaja MENDAHULUI variabel bawaan Vercel di bawah,
+  // yang berisi alamat *.vercel.app — bukan domain sendiri. Kalau yang bawaan
+  // menang, sitemap dan og:image menunjuk alamat yang bukan alamat utama,
+  // persis kebingungan yang ingin dihindari pengalihan apex -> www.
   const dariEnv = process.env.NEXT_PUBLIC_SITUS_URL
   if (dariEnv) return dariEnv.replace(/\/+$/, '')
 
