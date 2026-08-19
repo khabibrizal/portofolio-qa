@@ -4,7 +4,7 @@
 
 Landing page portofolio QA Engineer dengan admin CMS. Seluruh konten halaman berasal dari database dan diubah lewat halaman admin — tidak ada yang di-hardcode.
 
-- **Live:** https://portofolio-qa-gray.vercel.app
+- **Live:** https://khabibfahrurrizal.web.id
 - **Desain & keputusan:** [`docs/superpowers/specs/2026-08-17-portofolio-qa-design.md`](docs/superpowers/specs/2026-08-17-portofolio-qa-design.md)
 - **Stack:** Next.js 16 (App Router), TypeScript, Tailwind v4, Supabase, Vercel
 - **Test:** Vitest (unit) + Playwright (API & E2E), dijalankan di GitHub Actions tiap push
