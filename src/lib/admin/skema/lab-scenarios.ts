@@ -48,6 +48,24 @@ export const labScenarios: DefinisiKoleksi = {
       ],
     },
     {
+      nama: 'kode',
+      label: 'Cuplikan Kode',
+      jenis: 'teks-panjang',
+      petunjuk: 'Tempel apa adanya. Tidak diterjemahkan — kode sama untuk kedua bahasa.',
+    },
+    {
+      nama: 'kode_bahasa',
+      label: 'Bahasa Kode',
+      jenis: 'teks',
+      petunjuk: 'Label di atas cuplikan, mis. TypeScript atau Gherkin.',
+    },
+    {
+      nama: 'repo_url',
+      label: 'Tautan Berkas di Repo',
+      jenis: 'url',
+      petunjuk: 'Cuplikan bisa basi; tautan ke sumbernya tidak.',
+    },
+    {
       nama: 'full_report_url',
       label: 'URL Report Lengkap',
       jenis: 'url',

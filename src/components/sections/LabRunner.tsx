@@ -26,6 +26,9 @@ export type LabScenarioResolved = {
   steps: LangkahLabResolved[]
   resultSummary: RingkasanLabResolved | null
   fullReportUrl: string | null
+  kode: string | null
+  kodeBahasa: string | null
+  repoUrl: string | null
 }
 
 export type LabRunnerLabels = {
@@ -37,6 +40,7 @@ export type LabRunnerLabels = {
   failed: string
   durasi: string
   lihatReport: string
+  lihatSumber: string
   tanpaLangkah: string
 }
 
@@ -304,7 +308,22 @@ export function LabRunner({
                   </div>
                   <div className="rounded-lg border border-border bg-bg p-3.5 text-center">
                     <b className="block font-display text-xl text-pass">
-                      {scenario.resultSummary.passed}
+                      {scenario.kode ? (
+              <div className="mt-5 overflow-hidden rounded-lg border border-border">
+                <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-2 font-mono text-[11px] text-ink-faint">
+                  <span>{scenario.kodeBahasa ?? 'kode'}</span>
+                </div>
+                {/* Sengaja tanpa penyorot sintaks: satu pustaka highlighter
+                    menambah bundel yang jauh lebih besar daripada nilai yang
+                    diberikannya untuk beberapa cuplikan pendek. Monospace di
+                    atas latar netral sudah terbaca jelas. */}
+                <pre className="overflow-x-auto bg-surface p-4 font-mono text-[12.5px] leading-relaxed text-ink">
+                  <code>{scenario.kode}</code>
+                </pre>
+              </div>
+            ) : null}
+
+            {scenario.resultSummary.passed}
                     </b>
                     <span className="text-[11px] text-ink-faint">{labels.passed}</span>
                   </div>
@@ -317,14 +336,28 @@ export function LabRunner({
                     <span className="text-[11px] text-ink-faint">{labels.durasi}</span>
                   </div>
                 </div>
-                {scenario.fullReportUrl ? (
-                  <a
-                    href={scenario.fullReportUrl}
-                    className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
-                  >
-                    {labels.lihatReport}
-                  </a>
-                ) : null}
+                <div className="flex flex-wrap gap-3">
+                  {scenario.fullReportUrl ? (
+                    <a
+                      href={scenario.fullReportUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
+                    >
+                      {labels.lihatReport}
+                    </a>
+                  ) : null}
+                  {scenario.repoUrl ? (
+                    <a
+                      href={scenario.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
+                    >
+                      {labels.lihatSumber}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>

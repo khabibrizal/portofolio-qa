@@ -87,6 +87,10 @@ export type LabScenario = {
   steps: LangkahLab[]
   result_summary: RingkasanLab | null
   full_report_url: string | null
+  /** Cuplikan kode; apa adanya, tidak dwibahasa. */
+  kode: string | null
+  kode_bahasa: string | null
+  repo_url: string | null
 }
 
 export type Experience = {

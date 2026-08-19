@@ -21,6 +21,7 @@ const TEKS_UI: Record<
     failed: string
     durasi: string
     lihatReport: string
+    lihatSumber: string
     tanpaLangkah: string
   }
 > = {
@@ -37,6 +38,7 @@ const TEKS_UI: Record<
     failed: 'Failed',
     durasi: 'Durasi',
     lihatReport: 'Lihat Report Lengkap',
+    lihatSumber: 'Lihat di GitHub',
     tanpaLangkah: 'Skenario ini belum memiliki langkah.',
   },
   en: {
@@ -52,6 +54,7 @@ const TEKS_UI: Record<
     failed: 'Failed',
     durasi: 'Duration',
     lihatReport: 'View Full Report',
+    lihatSumber: 'View on GitHub',
     tanpaLangkah: 'This scenario has no steps yet.',
   },
 }
@@ -81,6 +84,9 @@ export function AutomationLab({
     })),
     resultSummary: scenario.result_summary,
     fullReportUrl: scenario.full_report_url,
+    kode: scenario.kode,
+    kodeBahasa: scenario.kode_bahasa,
+    repoUrl: scenario.repo_url,
   }))
 
   return (
@@ -104,6 +110,7 @@ export function AutomationLab({
             failed: ui.failed,
             durasi: ui.durasi,
             lihatReport: ui.lihatReport,
+            lihatSumber: ui.lihatSumber,
             tanpaLangkah: ui.tanpaLangkah,
           }}
         />

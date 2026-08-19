@@ -53,7 +53,7 @@ export const KOLOM_CASE_STUDIES =
   'id, test_code, project_name, role, objective, tools_used, process_steps, result_metrics, evidence_links, status_badge'
 
 export const KOLOM_LAB_SCENARIOS =
-  'id, framework_name, scenario_title, scenario_description, tags, steps, result_summary, full_report_url'
+  'id, framework_name, scenario_title, scenario_description, tags, steps, result_summary, full_report_url, kode, kode_bahasa, repo_url'
 
 export const KOLOM_EXPERIENCES =
   'id, company, role, period_start, period_end, location, responsibilities, achievements'

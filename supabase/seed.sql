@@ -86,13 +86,24 @@ on conflict (test_code) do nothing;
 
 insert into public.lab_scenarios (framework_name, scenario_title, scenario_description, tags,
   steps, result_summary, full_report_url, sort_order, status) values
-  ('Playwright',
-   '{"id":"Login & Checkout End-to-End","en":"End-to-End Login & Checkout"}',
-   '{"id":"Login, tambah ke keranjang, checkout, verifikasi order.","en":"Log in, add to cart, check out, verify the order."}',
-   '["TypeScript","Playwright"]'::jsonb,
-   '[{"label":{"id":"Membuka halaman login","en":"Opening the login page"},"duration_ms":850,"status":"pass"},
-     {"label":{"id":"Verifikasi order berhasil","en":"Verifying the order succeeded"},"duration_ms":600,"status":"pass"}]'::jsonb,
-   '{"total":6,"passed":6,"failed":0,"duration":"4.1s"}'::jsonb, null, 1, 'published'),
+  -- Skenario NYATA dari repo automation pemilik, bukan angka karangan.
+  -- Delapan langkah di bawah adalah isi login.feature apa adanya, dan
+  -- ringkasannya diambil dari run CI yang hijau. Section ini menjanjikan
+  -- "rekaman replay dari eksekusi test asli" — janji itu hanya jujur kalau
+  -- datanya memang dari run sungguhan.
+  ('Playwright + Cucumber',
+   '{"id":"Login lalu Tambah Produk ke Keranjang","en":"Login then Add Product to Cart"}',
+   '{"id":"Login sebagai pengguna, buka detail produk, tambahkan ke keranjang, dan verifikasi tombolnya berubah.","en":"Log in as a user, open a product detail, add it to the cart, and verify the button changes."}',
+   '["TypeScript","Cucumber BDD","Allure"]'::jsonb,
+   '[{"label":{"id":"Membuka halaman login","en":"Opening the login page"},"duration_ms":900,"status":"pass"},
+     {"label":{"id":"Mengisi username dan password","en":"Entering username and password"},"duration_ms":400,"status":"pass"},
+     {"label":{"id":"Menekan tombol login","en":"Clicking the login button"},"duration_ms":150,"status":"pass"},
+     {"label":{"id":"Verifikasi halaman produk tampil","en":"Verifying the products page appears"},"duration_ms":350,"status":"pass"},
+     {"label":{"id":"Membuka produk Sauce Labs Backpack","en":"Opening the Sauce Labs Backpack product"},"duration_ms":500,"status":"pass"},
+     {"label":{"id":"Verifikasi halaman detail produk","en":"Verifying the product detail page"},"duration_ms":300,"status":"pass"},
+     {"label":{"id":"Menekan tombol add to cart","en":"Clicking the add to cart button"},"duration_ms":250,"status":"pass"},
+     {"label":{"id":"Verifikasi tombol berubah jadi remove","en":"Verifying the button changes to remove"},"duration_ms":300,"status":"pass"}]'::jsonb,
+   '{"total":8,"passed":8,"failed":0,"duration":"3.2s"}'::jsonb, null, 1, 'published'),
   -- Skenario published KEDUA, dan alasannya bukan variasi konten: dengan satu tab
   -- saja, perpindahan tab dan pembersihan timer di tengah replay tidak bisa diuji
   -- sama sekali, padahal itu logika paling rawan di Automation Lab. Baris ini juga
