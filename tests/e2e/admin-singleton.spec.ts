@@ -1,3 +1,4 @@
+import { hero } from '../helpers/konten'
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { headerPemilik, tokenPemilik, urlTabel } from '../helpers/supabase-pemilik'
 
@@ -131,7 +132,10 @@ test.describe('Rute singleton (site_settings, hero, about)', () => {
     expect(nilaiOpsi).toEqual(expect.arrayContaining(['available', 'open', 'unavailable']))
   })
 
-  test('form hero menampilkan grup kedua CTA dan repeater key_stats dari seed', async ({ page }) => {
+  test('form hero menampilkan grup kedua CTA dan repeater key_stats dari database', async ({
+    page,
+    request,
+  }) => {
     await masukSebagaiAdmin(page)
     await page.goto('/admin/hero/1')
 
@@ -148,8 +152,15 @@ test.describe('Rute singleton (site_settings, hero, about)', () => {
     // Repeater key_stats berisi baris dari seed (supabase/seed.sql), bukan
     // repeater kosong — diperiksa lewat nilai FIELD-nya langsung (bukan
     // lencana "Baris N" generik FieldRepeater, yang dipakai ULANG oleh
-    // status_checks juga sehingga tidak unik per repeater). Baris pertama
-    // dari seed adalah "Tahun Pengalaman" / "4+".
-    await expect(page.locator('#key_stats-0-value')).toHaveValue('4+')
+    // status_checks juga sehingga tidak unik per repeater).
+    //
+    // Nilai yang diharapkan DIBACA DARI DATABASE. Versi sebelumnya mengunci
+    // "4+" dari seed, lalu gagal begitu pemiliknya mengisi angka yang
+    // sebenarnya — padahal formnya menampilkan tepat apa yang tersimpan. Yang
+    // ingin dibuktikan di sini adalah repeaternya TERISI dari database, bukan
+    // bahwa isinya suatu angka tertentu.
+    const h = await hero(request)
+    expect(h.key_stats.length, 'hero.key_stats kosong — tidak ada yang bisa diperiksa').toBeGreaterThan(0)
+    await expect(page.locator('#key_stats-0-value')).toHaveValue(h.key_stats[0].value)
   })
 })

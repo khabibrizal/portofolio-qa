@@ -13,8 +13,21 @@ test.describe('RLS — pembacaan oleh klien anonim', () => {
       expect(res.status()).toBe(200)
 
       const baris = (await res.json()) as Array<{ status: string }>
-      expect(baris.length, `${tabel} harus punya data seed`).toBeGreaterThan(0)
-      expect(baris.every((b) => b.status === 'published')).toBe(true)
+
+      // Yang diuji: TIDAK ADA baris non-published yang lolos ke klien anonim.
+      //
+      // Versi sebelumnya juga menuntut `baris.length > 0` dengan alasan "harus
+      // punya data seed". Tuntutan itu keliru dua kali. Ia mencampur dua hal
+      // berbeda — apakah kebijakan RLS benar, dan apakah kebetulan ada data —
+      // lalu melaporkan koleksi kosong sebagai kegagalan keamanan. Koleksi yang
+      // seluruh barisnya masih draft (mis. sertifikasi yang belum diisi
+      // pemiliknya) justru keadaan paling aman yang mungkin: anon tidak
+      // menerima apa pun. Menggagalkannya menekan pemilik untuk menerbitkan
+      // sesuatu — apa saja — hanya demi menghijaukan test keamanan.
+      expect(
+        baris.filter((b) => b.status !== 'published'),
+        `${tabel}: baris non-published lolos ke klien anonim`,
+      ).toEqual([])
     })
 
     test(`${tabel}: filter status=draft mengembalikan nol baris`, async ({ request }) => {

@@ -50,26 +50,54 @@ export function SkillBars({ skills }: { skills: Skill[] }) {
 
   return (
     <div ref={containerRef}>
-      {skills.map((skill) => (
-        <div key={skill.name} className="mb-4">
-          <div className="mb-1.5 flex justify-between text-sm">
-            <span className="font-medium">{skill.name}</span>
-            <span className="font-mono text-[12.5px] text-ink-faint">
-              {skill.proficiency_percent}%
-            </span>
+      {skills.map((skill) => {
+        // Persentase itu OPSIONAL, dan penanganannya di sini menentukan apakah
+        // halaman tampak rusak atau tidak.
+        //
+        // Versi sebelumnya selalu merender `{skill.proficiency_percent}%`. Untuk
+        // keahlian tanpa angka, yang tampil adalah tanda "%" menggantung tanpa
+        // bilangan apa pun, ditambah bilah kosong selebar 0% — terbaca seperti
+        // data yang gagal dimuat.
+        //
+        // Dan mengisinya dengan angka karangan bukan jalan keluar: "Manual
+        // Testing 90%" adalah klaim yang tidak diukur dari apa pun. Kalau
+        // pemiliknya tidak memberi angka, keahlian itu ditampilkan apa adanya
+        // sebagai nama — tanpa mengaku punya ukuran yang tidak ada.
+        const punyaPersen =
+          typeof skill.proficiency_percent === 'number' && skill.proficiency_percent > 0
+
+        if (!punyaPersen) {
+          return (
+            <div key={skill.name} className="mb-2.5 flex items-baseline gap-2 text-sm">
+              <span aria-hidden className="text-ink-faint">
+                •
+              </span>
+              <span className="font-medium">{skill.name}</span>
+            </div>
+          )
+        }
+
+        return (
+          <div key={skill.name} className="mb-4">
+            <div className="mb-1.5 flex justify-between text-sm">
+              <span className="font-medium">{skill.name}</span>
+              <span className="font-mono text-[12.5px] text-ink-faint">
+                {skill.proficiency_percent}%
+              </span>
+            </div>
+            <div className="h-[7px] overflow-hidden rounded-full bg-border">
+              <div
+                className={
+                  gerakDikurangi
+                    ? 'h-full rounded-full bg-primary'
+                    : 'h-full rounded-full bg-primary transition-[width] duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]'
+                }
+                style={{ width: lebarAkhirTampil ? `${skill.proficiency_percent}%` : '0%' }}
+              />
+            </div>
           </div>
-          <div className="h-[7px] overflow-hidden rounded-full bg-border">
-            <div
-              className={
-                gerakDikurangi
-                  ? 'h-full rounded-full bg-primary'
-                  : 'h-full rounded-full bg-primary transition-[width] duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]'
-              }
-              style={{ width: lebarAkhirTampil ? `${skill.proficiency_percent}%` : '0%' }}
-            />
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

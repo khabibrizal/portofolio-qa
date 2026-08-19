@@ -1,3 +1,4 @@
+import { headerPemilik, tokenPemilik, urlTabel } from '../helpers/supabase-pemilik'
 import { expect, test, type Page } from '@playwright/test'
 
 // Sama seperti admin-auth.spec.ts: test yang butuh sesi asli dilewati bersih
@@ -45,48 +46,80 @@ test.describe('Kerangka admin dan daftar entri', () => {
     ).toBeVisible()
   })
 
-  test('/admin/skill-categories menampilkan ketiga entri seed — dua terbit, satu draft', async ({
+  test('/admin/skill-categories menampilkan seluruh entri database, termasuk draft', async ({
     page,
+    request,
   }) => {
     await masukSebagaiAdmin(page)
+
+    // Daftar yang diharapkan DIBACA DARI DATABASE sebagai pemilik.
+    //
+    // Versi sebelumnya mengunci tiga nama seed ('Manual Testing',
+    // 'Automation Testing', 'Kategori Draft'), lalu gagal begitu pemiliknya
+    // menamai ulang kategorinya lewat /admin — padahal daftar itu menampilkan
+    // tepat apa yang tersimpan. Yang ingin dijaga di sini bukan nama tertentu,
+    // melainkan bahwa daftar admin memakai klien SESI, bukan klien anonim:
+    // kalau ia memakai klien anonim, entri draft hilang dari daftar dan
+    // pemiliknya tidak bisa lagi menemukan tulisan yang belum diterbitkan.
+    const token = await tokenPemilik(request, email!, password!)
+    const res = await request.get(urlTabel('skill_categories', '?select=category_name,status'), {
+      headers: headerPemilik(token),
+    })
+    expect(res.ok(), `gagal membaca skill_categories: HTTP ${res.status()}`).toBe(true)
+    const entri = (await res.json()) as Array<{
+      category_name: { id: string; en: string }
+      status: string
+    }>
+
+    expect(entri.length, 'skill_categories kosong — tidak ada yang bisa diperiksa').toBeGreaterThan(0)
+    expect(
+      entri.some((e) => e.status === 'draft'),
+      'tidak ada entri draft — kebocoran "daftar memakai klien anonim" tidak bisa terdeteksi',
+    ).toBe(true)
+
     await page.goto('/admin/skill-categories')
 
-    // Ketiga entri seed (supabase/seed.sql) hadir, termasuk yang draft — kalau
-    // draft hilang berarti daftar memakai klien anonim, bukan klien sesi
-    // (lihat komentar hitungEntri/ambilEntri di lib/admin/entri.ts).
-    await expect(page.getByText('Manual Testing', { exact: true })).toBeVisible()
-    await expect(page.getByText('Automation Testing', { exact: true })).toBeVisible()
-    await expect(page.getByText('Kategori Draft', { exact: true })).toBeVisible()
+    for (const e of entri) {
+      await expect(
+        page.getByText(e.category_name.id, { exact: true }),
+        `entri "${e.category_name.id}" tidak ada di daftar admin`,
+      ).toBeVisible()
+    }
 
-    // Judul dari category_name diresolusikan ke bahasa Indonesia (D15), bukan
-    // ditampilkan sebagai objek mentah. "Draft Category" adalah varian EN dari
-    // entri yang sama — kalau muncul, berarti resolusi memilih bahasa yang
-    // salah (atau tidak diresolusikan sama sekali).
+    // Judul diresolusikan ke bahasa Indonesia (D15), bukan ditampilkan sebagai
+    // objek mentah — dan bukan pula varian EN dari entri yang sama. Kalau varian
+    // EN muncul, resolusi memilih bahasa yang salah atau tidak berjalan.
     const isi = await page.locator('body').innerText()
-    expect(isi).not.toContain('[object Object]')
-    expect(isi).not.toContain('Draft Category')
+    expect(isi, 'nilai dwibahasa dirender sebagai objek mentah').not.toContain('[object Object]')
+    for (const e of entri) {
+      if (e.category_name.en === e.category_name.id) continue
+      expect(
+        isi,
+        `varian EN "${e.category_name.en}" muncul — resolusi bahasa salah`,
+      ).not.toContain(e.category_name.en)
+    }
 
     // Lencana diperiksa PER BARIS, bukan lewat cacah total.
     //
-    // Versi pertama mengasersi cacah global "Draft" = 1 dan "Terbit" = 2 — dan itu
-    // asersi tentang keadaan BERSAMA: begitu suite lain menambah entri di
-    // tabel yang sama (mis. admin-terbit.spec.ts saat berjalan paralel),
-    // test ini gagal karena sebab yang tak ada hubungannya dengan apa yang
-    // ingin dijaga. Kegagalan semacam itu mengajari orang meragukan suite
-    // yang sebenarnya benar.
+    // Versi pertama mengasersi cacah global "Draft" = 1 dan "Terbit" = 2, dan
+    // itu asersi tentang keadaan BERSAMA: begitu suite lain menambah entri di
+    // tabel yang sama, test ini gagal karena sebab yang tak berhubungan dengan
+    // apa yang ingin dijaga. Kegagalan semacam itu mengajari orang meragukan
+    // suite yang sebenarnya benar.
     //
-    // Yang benar-benar ingin dijaga adalah: entri terbit berlencana Terbit,
-    // entri draft berlencana Draft. Itu pernyataan tentang baris tertentu,
-    // dan kebal terhadap entri lain yang kebetulan ada.
-    const baris = (judul: string) => page.locator('li').filter({ hasText: judul })
-
-    await expect(baris('Manual Testing')).toContainText('Terbit')
-    await expect(baris('Automation Testing')).toContainText('Terbit')
-    await expect(baris('Kategori Draft')).toContainText('Draft')
-
-    // Dan yang draft TIDAK boleh berlencana terbit, maupun sebaliknya.
-    await expect(baris('Kategori Draft')).not.toContainText('Terbit')
-    await expect(baris('Manual Testing')).not.toContainText('Draft')
+    // Yang dijaga: entri terbit berlencana Terbit, entri draft berlencana
+    // Draft, dan tidak ada yang berlencana keduanya.
+    for (const e of entri) {
+      const baris = page.locator('li').filter({ hasText: e.category_name.id })
+      const seharusnya = e.status === 'published' ? 'Terbit' : 'Draft'
+      const jangan = e.status === 'published' ? 'Draft' : 'Terbit'
+      await expect(baris, `"${e.category_name.id}" tanpa lencana ${seharusnya}`).toContainText(
+        seharusnya,
+      )
+      await expect(baris, `"${e.category_name.id}" salah berlencana ${jangan}`).not.toContainText(
+        jangan,
+      )
+    }
   })
 
   test('/admin/koleksi-ngawur menghasilkan 404, bukan 500 maupun alihan login', async ({ page }) => {

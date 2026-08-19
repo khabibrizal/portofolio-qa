@@ -1,13 +1,46 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type APIRequestContext } from '@playwright/test'
+import { koleksi, type Dwibahasa } from '../helpers/konten'
+
+/**
+ * Angka report (durasi, total, jumlah tautan) DIBACA DARI DATABASE.
+ *
+ * Versi sebelumnya mengunci nilai seed — '4.1s', total '6', '1.4s', dan
+ * "skenario pertama sengaja tidak punya full_report_url". Ketiganya berhenti
+ * benar begitu skenario Lab diisi data run yang sungguhan: durasinya berubah,
+ * totalnya berubah, dan skenario pertama justru MEMILIKI tautan report. Test
+ * lalu melaporkan kegagalan atas perubahan konten, bukan atas cacat aplikasi.
+ */
+type Skenario = {
+  framework_name: string
+  scenario_title: Dwibahasa
+  result_summary: { total: number; passed: number; failed: number; duration: string } | null
+  full_report_url: string | null
+  repo_url: string | null
+  kode: string | null
+}
+
+function skenarioLab(request: APIRequestContext) {
+  return koleksi<Skenario>(
+    request,
+    'lab_scenarios',
+    'framework_name,scenario_title,result_summary,full_report_url,repo_url,kode,sort_order',
+  )
+}
 
 // Replay Automation Lab punya jeda ratusan milidetik per langkah (850ms +
 // 600ms di seed). Seluruh penantian di sini memakai expect yang retry
 // otomatis — bukan waitForTimeout buta — supaya test tetap cepat saat report
 // muncul lebih awal dan tetap tidak flaky saat CI lebih lambat dari lokal.
 test.describe('Automation Lab — replay interaktif', () => {
-  test('klik "Jalankan Test" memutar replay lalu menampilkan report sesuai seed', async ({
+  test('klik "Jalankan Test" memutar replay lalu menampilkan report sesuai database', async ({
     page,
+    request,
   }) => {
+    const lab = await skenarioLab(request)
+    const pertama = lab[0]
+    expect(pertama?.result_summary, 'skenario pertama tanpa result_summary').toBeTruthy()
+    const durasi = pertama.result_summary!.duration
+
     await page.goto('/id')
 
     const panel = page.locator('#automation-lab').getByRole('tabpanel')
@@ -17,23 +50,22 @@ test.describe('Automation Lab — replay interaktif', () => {
     await expect(tombol).toHaveText('Jalankan Test')
     await tombol.click()
 
-    // Durasi total langkah di seed adalah 850ms + 600ms; timeout diberi
-    // ruang jauh lebih longgar untuk menampung overhead di CI.
-    await expect(panel.getByText('4.1s')).toBeVisible({ timeout: 10_000 })
+    // Timeout diberi ruang longgar: durasi replay adalah jumlah duration_ms
+    // seluruh langkah, dan bisa berubah kapan pun datanya diperbarui.
+    await expect(panel.getByText(durasi)).toBeVisible({ timeout: 15_000 })
 
     const isiReport = await panel.innerText()
-    expect(isiReport).toContain('Total Test')
-    expect(isiReport).toContain('6')
-    expect(isiReport).toContain('Passed')
-    expect(isiReport).toContain('Failed')
-    expect(isiReport).toContain('0')
-    expect(isiReport).toContain('Durasi')
-    expect(isiReport).toContain('4.1s')
+    for (const label of ['Total Test', 'Passed', 'Failed', 'Durasi']) {
+      expect(isiReport, `label report "${label}" tidak ada`).toContain(label)
+    }
+    expect(isiReport).toContain(String(pertama.result_summary!.total))
+    expect(isiReport).toContain(String(pertama.result_summary!.failed))
+    expect(isiReport).toContain(durasi)
 
     // Tombol berubah jadi "Jalankan Lagi" dan replay bisa diputar berulang.
     await expect(tombol).toHaveText('Jalankan Lagi')
     await tombol.click()
-    await expect(panel.getByText('4.1s')).toBeVisible({ timeout: 10_000 })
+    await expect(panel.getByText(durasi)).toBeVisible({ timeout: 15_000 })
   })
 })
 
@@ -55,31 +87,48 @@ test.describe('Automation Lab — perpindahan tab', () => {
     await expect(lab.getByRole('tabpanel')).not.toContainText('Login & Checkout End-to-End')
   })
 
-  test('tautan report lengkap hanya muncul pada skenario yang punya URL', async ({ page }) => {
+  test('tautan hanya muncul untuk URL yang benar-benar ada di database', async ({
+    page,
+    request,
+  }) => {
+    const lab = await skenarioLab(request)
     await page.goto('/id')
 
-    const lab = page.locator('#automation-lab')
-    const panel = lab.getByRole('tabpanel')
+    const bagian = page.locator('#automation-lab')
+    const panel = bagian.getByRole('tabpanel')
 
-    // Skenario pertama di seed sengaja tidak punya full_report_url — cabang
-    // penjaga null-nya harus benar-benar menyembunyikan tautannya.
-    await panel.getByRole('button').click()
-    await expect(panel.getByText('4.1s')).toBeVisible({ timeout: 10_000 })
-    await expect(panel.getByRole('link')).toHaveCount(0)
+    // Diperiksa untuk SETIAP skenario, bukan hanya dua yang pertama: cabang
+    // penjaga null-nya harus benar pada semuanya. Jumlah tautan yang diharapkan
+    // diturunkan dari data — satu untuk full_report_url, satu untuk repo_url.
+    for (const s of lab) {
+      await bagian.getByRole('tab', { name: s.framework_name }).first().click()
 
-    // Skenario kedua punya URL, jadi tautannya wajib ada setelah report muncul.
-    await lab.getByRole('tab', { name: 'k6' }).click()
-    await panel.getByRole('button').click()
-    await expect(panel.getByText('1.4s')).toBeVisible({ timeout: 10_000 })
-    await expect(panel.getByRole('link')).toHaveAttribute(
-      'href',
-      'https://example.com/laporan/uji-beban-pencarian',
-    )
+      const tombol = panel.getByRole('button')
+      if ((await tombol.count()) === 0) continue
+      await tombol.click()
+
+      if (s.result_summary) {
+        await expect(panel.getByText(s.result_summary.duration)).toBeVisible({ timeout: 15_000 })
+      }
+
+      const diharapkan = [s.full_report_url, s.repo_url].filter(Boolean) as string[]
+      await expect(
+        panel.getByRole('link'),
+        `${s.framework_name}: jumlah tautan tidak sesuai data`,
+      ).toHaveCount(diharapkan.length)
+
+      for (const url of diharapkan) {
+        await expect(panel.locator(`a[href="${url}"]`)).toHaveCount(1)
+      }
+    }
   })
 
   test('berpindah tab di tengah replay tidak meninggalkan indikator yang membeku', async ({
     page,
+    request,
   }) => {
+    const skenario = await skenarioLab(request)
+    const durasiPertama = skenario[0]?.result_summary?.duration ?? ''
     const errorKonsol: string[] = []
     page.on('pageerror', (e) => errorKonsol.push(e.message))
 
@@ -111,7 +160,7 @@ test.describe('Automation Lab — perpindahan tab', () => {
     // Skenario pertama harus tetap idle: tidak pernah lanjut sendiri, dan
     // report-nya tidak boleh muncul tanpa ada yang menekan tombolnya.
     await expect(panel.getByRole('button')).toHaveText('Jalankan Test')
-    await expect(panel.getByText('4.1s')).toHaveCount(0)
+    await expect(panel.getByText(durasiPertama)).toHaveCount(0)
 
     // Timer yang menembak setelah tab berganti akan muncul sebagai error
     // runtime; tidak boleh ada satu pun.
