@@ -1,5 +1,19 @@
 # Utang Terbuka
 
+## RUANG LINGKUP DIPANGKAS — 2026-08-18
+
+Pemilik meninjau ulang dan menyatakan proyek ini melebar dari kebutuhannya: yang diminta adalah **landing profil pribadi + halaman admin**, bukan platform. Angkanya membenarkan: kode aplikasi 5.006 baris, sementara test 3.605 dan dokumen 3.940 — test dan dokumen melebihi aplikasinya sendiri.
+
+**Dibatalkan seluruhnya:**
+
+- **Fase 3 (analytics + dashboard).** Tabel `analytics_events` sudah terlanjur ada beserta kebijakan RLS-nya; dibiarkan karena tidak menulis apa pun dan tidak merugikan. Tidak ada pelacakan, tidak ada dashboard.
+- **Fase 4 (a11y menyeluruh, visual regression, Lighthouse CI, link checker).** Semuanya "bagus dimiliki" dan tidak satu pun menghalangi situs berfungsi. Badge CI yang diminta pemilik sudah tayang sejak Fase 0.
+
+**Dipertahankan dari Fase 5:** SEO di landing (`sitemap.ts`, `robots.ts`), melepas `noindex` (U-5), dan konten asli.
+
+**Disiplin test diturunkan untuk sisa pekerjaan.** Uji mutasi per-field dihentikan; skema yang tersisa adalah berkas data murni di atas mesin validasi yang sudah teruji. Yang tetap dijalankan hanya test siklus terbit per koleksi. Ini pelonggaran sadar, bukan kelalaian — dicatat di sini supaya siapa pun yang membaca suite ini tahu batas jaminannya.
+
+
 Hal yang sengaja ditunda beserta kapan harus dilunasi. Jangan menutup sebuah fase sebelum utang yang jatuh tempo di fase itu lunas.
 
 ## U-6 — Audit RLS belum berjalan di CI  🟠 pertimbangkan di Fase 4

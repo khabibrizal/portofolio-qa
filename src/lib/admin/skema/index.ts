@@ -1,8 +1,11 @@
 import type { DefinisiKoleksi } from './tipe'
 import { about } from './about'
+import { caseStudies } from './case-studies'
 import { certifications } from './certifications'
 import { education } from './education'
+import { experiences } from './experiences'
 import { hero } from './hero'
+import { labScenarios } from './lab-scenarios'
 import { siteSettings } from './site-settings'
 import { skillCategories } from './skill-categories'
 import { testimonials } from './testimonials'
@@ -18,8 +21,8 @@ import { tools } from './tools'
  * Urutan mengikuti urutan tampil di landing (`KomposisiHalaman.tsx`) bila
  * memungkinkan: Hero -> TrustStrip (tools) -> About -> Coverage
  * (skillCategories) -> ... -> Certifications (certifications, education)
- * -> Testimonials. Tiga koleksi kompleks di antaranya (case_studies,
- * lab_scenarios, experiences) belum terdaftar di sini — itu Task 5.
+ * -> Testimonials. Kedua belas koleksi kini terdaftar; menambah koleksi baru
+ * tetap cukup dengan menambah satu berkas skema dan satu baris di sini.
  */
 export const registryKoleksi: Record<string, DefinisiKoleksi> = {
   [siteSettings.slug]: siteSettings,
@@ -27,6 +30,9 @@ export const registryKoleksi: Record<string, DefinisiKoleksi> = {
   [tools.slug]: tools,
   [about.slug]: about,
   [skillCategories.slug]: skillCategories,
+  [caseStudies.slug]: caseStudies,
+  [labScenarios.slug]: labScenarios,
+  [experiences.slug]: experiences,
   [certifications.slug]: certifications,
   [education.slug]: education,
   [testimonials.slug]: testimonials,
