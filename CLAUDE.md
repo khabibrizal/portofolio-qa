@@ -54,6 +54,17 @@ Untuk memeriksa **ketiadaan** teks, pakai `textContent` dan bandingkan tanpa ped
 
 Ini pernah membuat test "tidak satu pun baris draft tampil" tak pernah bisa gagal untuk satu koleksi. Dibuktikan dengan melumpuhkan kedua lapis pengaman sekaligus: draft benar-benar terkirim ke halaman, dan test tetap hijau.
 
+### textContent menyapu isi <script> — pilih lingkupnya sesuai maksud
+
+`textContent` membaca **semua** simpul teks termasuk isi `<script>`, dan payload RSC Next.js menyertakan template 404 (`"This page could not be found."`) sebagai fallback di **setiap** halaman. Memeriksa `body.textContent()` untuk "tidak ada layar error" karena itu selalu gagal, bahkan di halaman yang sehat.
+
+Aturannya bergantung pada apa yang dibuktikan:
+
+- **Tidak ada layar error** → lingkupi ke `main` (konten yang benar-benar dirender).
+- **Tidak ada data yang bocor** → `body` justru lebih tepat. Data yang bocor ke payload RSC tetap kebocoran meski tidak terlihat di layar.
+
+Ini kebalikan dari jebakan `innerText`: `innerText` membuang isi script tapi menerapkan `text-transform` CSS.
+
 ### Jangan mem-grep keluaran Vitest
 
 Baris ringkasan bisa berbunyi `51 passed` padahal enam berkas gagal dijalankan (`Failed to start forks worker`, muncul saat mesin terbebani). Hanya **exit code** yang jujur. Mem-grep `Tests ` menyembunyikan pesan itu dan membuat kehilangan cakupan terlihat seperti keberhasilan.
