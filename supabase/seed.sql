@@ -103,7 +103,8 @@ insert into public.lab_scenarios (framework_name, scenario_title, scenario_descr
      {"label":{"id":"Verifikasi halaman detail produk","en":"Verifying the product detail page"},"duration_ms":300,"status":"pass"},
      {"label":{"id":"Menekan tombol add to cart","en":"Clicking the add to cart button"},"duration_ms":250,"status":"pass"},
      {"label":{"id":"Verifikasi tombol berubah jadi remove","en":"Verifying the button changes to remove"},"duration_ms":300,"status":"pass"}]'::jsonb,
-   '{"total":8,"passed":8,"failed":0,"duration":"3.2s"}'::jsonb, null, 1, 'published'),
+   '{"total":8,"passed":8,"failed":0,"duration":"3.2s"}'::jsonb,
+   'https://fahrurrizal2906.github.io/Automation-Web-with-Playwright/', 1, 'published'),
   -- Skenario published KEDUA, dan alasannya bukan variasi konten: dengan satu tab
   -- saja, perpindahan tab dan pembersihan timer di tengah replay tidak bisa diuji
   -- sama sekali, padahal itu logika paling rawan di Automation Lab. Baris ini juga
