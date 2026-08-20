@@ -116,7 +116,16 @@ test.describe('Empat koleksi sederhana (tools, certifications, education, testim
     await page.goto(`/admin/${slug}/baru`)
     await isiForm(page, penanda)
     await page.getByRole('button', { name: 'Simpan' }).click()
-    await expect(page).toHaveURL(new RegExp(`/admin/${slug}/[0-9a-f-]{36}$`), { timeout: 10_000 })
+    // Query opsional: menyimpan entri baru membawa `?tersimpan=baru` sebagai
+    // penanda pesan "tersimpan sebagai draft" di halaman tujuan.
+    //
+    // Dipakai kelas karakter `[?]`, bukan `\?`: di dalam template literal,
+    // backslash-nya dimakan string dan RegExp menerima `?` telanjang —
+    // menghasilkan grup cacat `(?.*)` dan galat "Invalid group". Kelas karakter
+    // tidak butuh escape sama sekali, jadi jebakannya hilang.
+    await expect(page).toHaveURL(new RegExp(`/admin/${slug}/[0-9a-f-]{36}([?].*)?$`), {
+      timeout: 10_000,
+    })
     const urlEntri = page.url()
 
     // 2. Entri muncul di daftar admin dengan lencana draft.
@@ -132,6 +141,11 @@ test.describe('Empat koleksi sederhana (tools, certifications, education, testim
     // 4. Terbitkan.
     await page.goto(urlEntri)
     await page.getByRole('button', { name: 'Terbitkan' }).click()
+    // Menerbitkan kini lewat dialog konfirmasi. Dilingkupi ke role dialog:
+    // tombol pemicu di halaman JUGA bernama "Terbitkan", jadi pencarian tanpa
+    // lingkup kena strict-mode violation (dua elemen cocok).
+    await expect(page.getByRole('dialog')).toContainText('Terbitkan entri ini?')
+    await page.getByRole('dialog').getByRole('button', { name: 'Terbitkan' }).click()
     await expect(page.getByText('Terbit', { exact: true })).toBeVisible({ timeout: 10_000 })
 
     // 5. Landing /id MENAMPILKANNYA tanpa deploy ulang (revalidatePath).
@@ -143,6 +157,11 @@ test.describe('Empat koleksi sederhana (tools, certifications, education, testim
     // exact: true — beberapa form di sini (mis. repeater kalau ada) bisa
     // punya tombol lain yang namanya mengandung "Hapus" sebagai substring.
     await page.getByRole('button', { name: 'Hapus', exact: true }).click()
+    // Hapus kini butuh konfirmasi. Label aksinya sengaja BERBEDA dari
+    // pemicunya ("Hapus Permanen"), supaya isi dialog tidak bisa tertukar
+    // dengan tombol yang membukanya.
+    await expect(page.getByRole('dialog')).toContainText('TIDAK bisa dibatalkan')
+    await page.getByRole('dialog').getByRole('button', { name: 'Hapus Permanen' }).click()
     await expect(page).toHaveURL(new RegExp(`/admin/${slug}$`), { timeout: 10_000 })
 
     await page.goto('/id')

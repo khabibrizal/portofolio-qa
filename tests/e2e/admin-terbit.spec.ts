@@ -74,7 +74,7 @@ test.describe('Penerbitan skill_categories — siklus penuh', () => {
     // 3. Simpan sebagai draft — entri baru selalu draft (default kolom di DB),
     // `simpan` sengaja tidak pernah menyentuh `status`.
     await page.getByRole('button', { name: 'Simpan' }).click()
-    await expect(page).toHaveURL(/\/admin\/skill-categories\/[0-9a-f-]{36}$/, { timeout: 10_000 })
+    await expect(page).toHaveURL(/\/admin\/skill-categories\/[0-9a-f-]{36}([?].*)?$/, { timeout: 10_000 })
     const urlEntri = page.url()
 
     // 4. Entri muncul di daftar admin dengan lencana draft
@@ -91,6 +91,11 @@ test.describe('Penerbitan skill_categories — siklus penuh', () => {
     // 6. Terbitkan
     await page.goto(urlEntri)
     await page.getByRole('button', { name: 'Terbitkan' }).click()
+    // Menerbitkan kini lewat dialog konfirmasi. Dilingkupi ke role dialog:
+    // tombol pemicu di halaman JUGA bernama "Terbitkan", jadi pencarian tanpa
+    // lingkup kena strict-mode violation (dua elemen cocok).
+    await expect(page.getByRole('dialog')).toContainText('Terbitkan entri ini?')
+    await page.getByRole('dialog').getByRole('button', { name: 'Terbitkan' }).click()
     await expect(page.getByText('Terbit', { exact: true })).toBeVisible({ timeout: 10_000 })
 
     // 7. Landing /id MENAMPILKANNYA tanpa deploy ulang — INTI KEDUA: penerbitan
@@ -116,6 +121,11 @@ test.describe('Penerbitan skill_categories — siklus penuh', () => {
     // exact: true — halaman juga punya tombol "Hapus baris N" di repeater
     // skills, dan getByRole tanpa exact mencocokkan substring dari nama itu.
     await page.getByRole('button', { name: 'Hapus', exact: true }).click()
+    // Hapus kini butuh konfirmasi. Label aksinya sengaja BERBEDA dari
+    // pemicunya ("Hapus Permanen"), supaya isi dialog tidak bisa tertukar
+    // dengan tombol yang membukanya.
+    await expect(page.getByRole('dialog')).toContainText('TIDAK bisa dibatalkan')
+    await page.getByRole('dialog').getByRole('button', { name: 'Hapus Permanen' }).click()
     await expect(page).toHaveURL(/\/admin\/skill-categories$/, { timeout: 10_000 })
 
     await page.goto('/id')

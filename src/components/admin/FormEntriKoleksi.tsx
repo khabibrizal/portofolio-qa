@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { DialogKonfirmasi, type JenisKonfirmasi } from './DialogKonfirmasi'
 import type { BarisEntri } from '@/lib/admin/entri'
 import { hapus, jadikanDraft, simpan, terbitkan } from '@/lib/admin/aksi'
 import type { DefinisiKoleksi } from '@/lib/admin/skema/tipe'
@@ -26,8 +27,43 @@ export function FormEntriKoleksi({
   entri: BarisEntri | null
 }) {
   const router = useRouter()
-  const [pesan, setPesan] = useState<Pesan | null>(null)
+  const paramPencarian = useSearchParams()
+
+  /**
+   * Pesan awal dibaca dari `?tersimpan=baru`.
+   *
+   * Menyimpan entri baru memindahkan pengguna ke rute editnya. Tanpa penanda
+   * ini, satu-satunya hal yang terjadi setelah menekan Simpan adalah alamat
+   * halaman berubah — tanpa satu kata pun. Itu bentuk paling sering dibaca
+   * sebagai "sepertinya tidak terjadi apa-apa", dan orang menekan Simpan lagi.
+   *
+   * `useState` dengan nilai awal, BUKAN `useEffect`: pesannya harus sudah ada
+   * pada render pertama, dan tetap bisa ditimpa pesan aksi berikutnya.
+   */
+  const [pesan, setPesan] = useState<Pesan | null>(
+    paramPencarian.get('tersimpan') === 'baru'
+      ? { jenis: 'sukses', teks: 'Tersimpan sebagai draft. Terbitkan bila sudah siap tampil publik.' }
+      : null,
+  )
   const [sedangProses, setSedangProses] = useState(false)
+
+  /**
+   * Aksi yang harus dikonfirmasi lebih dulu — dan hanya yang PUNYA AKIBAT.
+   *
+   * `Simpan` sengaja TIDAK ada di sini. Menyimpan adalah hal yang memang
+   * diinginkan orang saat menekan tombolnya; meminta konfirmasi untuk itu
+   * menambah satu ketukan tanpa menambah keamanan, dan justru melatih orang
+   * menekan "Ya" tanpa membaca — yang membuat konfirmasi di tempat yang benar
+   * ikut kehilangan artinya. Kejelasan untuk Simpan datang dari pesan SESUDAH
+   * tersimpan, bukan pertanyaan sebelumnya.
+   */
+  const [konfirmasi, setKonfirmasi] = useState<null | {
+    judul: string
+    keterangan: string
+    labelAksi: string
+    jenis: JenisKonfirmasi
+    jalankan: () => Promise<void>
+  }>(null)
 
   async function tanganiSimpan(nilai: Record<string, unknown>) {
     setSedangProses(true)
@@ -44,11 +80,15 @@ export function FormEntriKoleksi({
       // Entri baru selalu tersimpan sebagai draft (default kolom) — pindah ke
       // rute editnya sendiri supaya pengguna bisa lanjut menerbitkan/mengubah
       // tanpa harus mencarinya lagi di daftar.
-      router.push(`/admin/${definisi.slug}/${hasil.id}`)
+      // Penanda `?tersimpan=baru` dibawa ke rute edit supaya halaman tujuan
+      // bisa mengabarkan hasilnya. Tanpa itu, menekan Simpan pada entri baru
+      // hanya mengganti alamat halaman tanpa satu kata pun — hasil yang paling
+      // sering dibaca sebagai "sepertinya tidak terjadi apa-apa".
+      router.push(`/admin/${definisi.slug}/${hasil.id}?tersimpan=baru`)
       return
     }
 
-    setPesan({ jenis: 'sukses', teks: 'Tersimpan.' })
+    setPesan({ jenis: 'sukses', teks: 'Perubahan tersimpan.' })
     router.refresh()
   }
 
@@ -61,6 +101,10 @@ export function FormEntriKoleksi({
       setPesan({ jenis: 'gagal', teks: hasil.error })
       return
     }
+    // Tanpa pesan ini, satu-satunya tanda bahwa aksinya berhasil adalah lencana
+    // kecil yang berubah di sudut — mudah terlewat, dan orang menekan tombolnya
+    // dua kali karena tidak yakin.
+    setPesan({ jenis: 'sukses', teks: 'Entri diterbitkan — sudah tampil di halaman publik.' })
     router.refresh()
   }
 
@@ -73,6 +117,10 @@ export function FormEntriKoleksi({
       setPesan({ jenis: 'gagal', teks: hasil.error })
       return
     }
+    setPesan({
+      jenis: 'sukses',
+      teks: 'Entri dijadikan draft — sudah tidak tampil di halaman publik.',
+    })
     router.refresh()
   }
 
@@ -113,7 +161,16 @@ export function FormEntriKoleksi({
             {entri.status === 'draft' ? (
               <button
                 type="button"
-                onClick={tanganiTerbitkan}
+                onClick={() =>
+                  setKonfirmasi({
+                    judul: 'Terbitkan entri ini?',
+                    keterangan:
+                      'Setelah diterbitkan, entri ini langsung tampil di halaman publik dan bisa dilihat siapa saja.',
+                    labelAksi: 'Terbitkan',
+                    jenis: 'biasa',
+                    jalankan: tanganiTerbitkan,
+                  })
+                }
                 disabled={sedangProses}
                 className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-surface disabled:opacity-50"
               >
@@ -122,7 +179,16 @@ export function FormEntriKoleksi({
             ) : (
               <button
                 type="button"
-                onClick={tanganiJadikanDraft}
+                onClick={() =>
+                  setKonfirmasi({
+                    judul: 'Jadikan draft?',
+                    keterangan:
+                      'Entri ini akan hilang dari halaman publik. Isinya tetap tersimpan dan bisa diterbitkan lagi kapan pun.',
+                    labelAksi: 'Jadikan Draft',
+                    jenis: 'biasa',
+                    jalankan: tanganiJadikanDraft,
+                  })
+                }
                 disabled={sedangProses}
                 className="rounded-md border border-border px-3 py-1.5 text-sm text-ink-soft disabled:opacity-50"
               >
@@ -131,7 +197,16 @@ export function FormEntriKoleksi({
             )}
             <button
               type="button"
-              onClick={tanganiHapus}
+              onClick={() =>
+                setKonfirmasi({
+                  judul: 'Hapus entri ini?',
+                  keterangan:
+                    'Entri dan seluruh isinya dihapus permanen. Tindakan ini TIDAK bisa dibatalkan.',
+                  labelAksi: 'Hapus Permanen',
+                  jenis: 'bahaya',
+                  jalankan: tanganiHapus,
+                })
+              }
               disabled={sedangProses}
               className="rounded-md border border-critical px-3 py-1.5 text-sm text-critical disabled:opacity-50"
             >
@@ -151,6 +226,25 @@ export function FormEntriKoleksi({
       )}
 
       <FormSkema definisi={definisi} nilaiAwal={nilaiAwal} onSimpan={tanganiSimpan} />
+
+      {konfirmasi && (
+        <DialogKonfirmasi
+          judul={konfirmasi.judul}
+          keterangan={konfirmasi.keterangan}
+          labelAksi={konfirmasi.labelAksi}
+          jenis={konfirmasi.jenis}
+          sedangProses={sedangProses}
+          onBatal={() => setKonfirmasi(null)}
+          onKonfirmasi={async () => {
+            // Dialog ditutup DULU, lalu aksinya dijalankan. Kalau urutannya
+            // dibalik, dialog menggantung selama permintaan berjalan dan
+            // pengguna bisa menekan tombolnya lagi.
+            const jalankan = konfirmasi.jalankan
+            setKonfirmasi(null)
+            await jalankan()
+          }}
+        />
+      )}
     </div>
   )
 }
