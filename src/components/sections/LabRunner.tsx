@@ -222,6 +222,18 @@ export function LabRunner({
             id={`lab-panel-${scenario.id}`}
             role="tabpanel"
             aria-labelledby={`lab-tab-${scenario.id}`}
+            // Atribut `hidden`, bukan hanya kelas CSS `hidden`.
+            //
+            // Sebelumnya panel non-aktif disembunyikan semata lewat kelas
+            // Tailwind. Itu berarti semantik aksesibilitasnya bergantung pada
+            // stylesheet: kalau CSS gagal dimuat, SELURUH panel terekspos ke
+            // pohon aksesibilitas sekaligus dan pembaca layar mengumumkan
+            // isi semua skenario, bukan yang sedang dipilih.
+            //
+            // Atribut `hidden` adalah pola ARIA tabs yang baku dan berlaku
+            // tanpa CSS sama sekali. Kelasnya tetap dipertahankan untuk
+            // gayanya.
+            hidden={i !== activeIndex}
             className={
               i === activeIndex
                 ? 'rounded-[14px] border border-border bg-surface p-[30px]'
@@ -299,6 +311,50 @@ export function LabRunner({
               )}
             </div>
 
+            {/* Cuplikan kode dirender SELALU, bukan menunggu replay selesai.
+                Kodenya adalah bukti utama di section ini — pembaca harus bisa
+                melihatnya tanpa lebih dulu menekan tombol dan menunggu.
+
+                Blok ini pernah tersisip ke dalam elemen <b> angka "Passed"
+                karena jangkar penyisipan otomatis mengenai kemunculan
+                `scenario.resultSummary` yang salah. Akibatnya cuplikan baru
+                muncul setelah replay selesai, dan bersarang di dalam sel
+                statistik. Tidak terdeteksi typecheck maupun lint (JSX-nya sah),
+                dan grep pada HTML pun menemukan teks "Gherkin" — tapi yang
+                ditemukannya adalah PAYLOAD RSC yang memuat props sebagai data,
+                bukan keluaran yang dirender. Pelajarannya: verifikasi cuplikan
+                kode ini lewat test komponen yang membaca DOM. */}
+            {scenario.kode ? (
+              <div className="mt-5 overflow-hidden rounded-lg border border-border">
+                <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-2 font-mono text-[11px] text-ink-faint">
+                  <span>{scenario.kodeBahasa ?? 'kode'}</span>
+                  {/* Tautan ke berkas sumbernya duduk di kepala blok kode, dan
+                      TIDAK di baris tombol hasil.
+                      Sebelumnya ia ikut tersembunyi sampai replay selesai —
+                      padahal tautan ke kode sumber bukan hasil eksekusi, dan
+                      pembaca yang ingin memeriksa cuplikan ini seharusnya tidak
+                      perlu menjalankan apa pun lebih dulu. Yang memang milik
+                      blok hasil hanyalah tautan report. */}
+                  {scenario.repoUrl ? (
+                    <a
+                      href={scenario.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      {labels.lihatSumber}
+                    </a>
+                  ) : null}
+                </div>
+                {/* Sengaja tanpa penyorot sintaks: satu pustaka highlighter
+                    menambah bundel jauh lebih besar daripada nilai yang
+                    diberikannya untuk beberapa cuplikan pendek. */}
+                <pre className="overflow-x-auto bg-surface p-4 font-mono text-[12.5px] leading-relaxed text-ink">
+                  <code>{scenario.kode}</code>
+                </pre>
+              </div>
+            ) : null}
+
             {runState.finished && scenario.resultSummary ? (
               <div className="mt-5 border-t border-border pt-5">
                 <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -308,22 +364,7 @@ export function LabRunner({
                   </div>
                   <div className="rounded-lg border border-border bg-bg p-3.5 text-center">
                     <b className="block font-display text-xl text-pass">
-                      {scenario.kode ? (
-              <div className="mt-5 overflow-hidden rounded-lg border border-border">
-                <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-2 font-mono text-[11px] text-ink-faint">
-                  <span>{scenario.kodeBahasa ?? 'kode'}</span>
-                </div>
-                {/* Sengaja tanpa penyorot sintaks: satu pustaka highlighter
-                    menambah bundel yang jauh lebih besar daripada nilai yang
-                    diberikannya untuk beberapa cuplikan pendek. Monospace di
-                    atas latar netral sudah terbaca jelas. */}
-                <pre className="overflow-x-auto bg-surface p-4 font-mono text-[12.5px] leading-relaxed text-ink">
-                  <code>{scenario.kode}</code>
-                </pre>
-              </div>
-            ) : null}
-
-            {scenario.resultSummary.passed}
+                      {scenario.resultSummary.passed}
                     </b>
                     <span className="text-[11px] text-ink-faint">{labels.passed}</span>
                   </div>
@@ -345,16 +386,6 @@ export function LabRunner({
                       className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
                     >
                       {labels.lihatReport}
-                    </a>
-                  ) : null}
-                  {scenario.repoUrl ? (
-                    <a
-                      href={scenario.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-border bg-surface px-6 py-3.5 text-[14.5px] font-semibold text-ink"
-                    >
-                      {labels.lihatSumber}
                     </a>
                   ) : null}
                 </div>

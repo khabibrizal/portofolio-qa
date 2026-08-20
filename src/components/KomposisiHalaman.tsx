@@ -38,9 +38,23 @@ import type { Locale } from '@/lib/i18n/locales'
  * komponen ini maupun section di dalamnya.
  */
 export function KomposisiHalaman({ konten, locale }: { konten: PageContent; locale: Locale }) {
+  // Anchor yang benar-benar akan ada di halaman ini.
+  //
+  // Syarat tiap baris HARUS sama dengan syarat sembunyi-diri di komponen
+  // section-nya, karena itulah yang menentukan apakah anchornya dirender.
+  // Dihitung di sini, di tempat section-section itu dirangkai, supaya
+  // keduanya tidak bisa menyimpang tanpa terlihat.
+  const anchorTersedia = [
+    konten.about ? 'tentang' : null,
+    konten.skillCategories.length > 0 ? 'coverage' : null,
+    konten.caseStudies.length > 0 ? 'studi-kasus' : null,
+    konten.labScenarios.length > 0 ? 'automation-lab' : null,
+    konten.experiences.length > 0 ? 'pengalaman' : null,
+  ].filter((a): a is string => a !== null)
+
   return (
     <>
-      <Nav settings={konten.siteSettings} locale={locale} />
+      <Nav settings={konten.siteSettings} locale={locale} anchorTersedia={anchorTersedia} />
       <main className="flex-1">
         <Hero hero={konten.hero} locale={locale} />
         <TrustStrip tools={konten.tools} locale={locale} />

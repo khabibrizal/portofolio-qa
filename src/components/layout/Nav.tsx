@@ -17,16 +17,43 @@ const TAUTAN = [
   { anchor: 'pengalaman', label: { id: 'Pengalaman', en: 'Experience' } },
 ]
 
-export function Nav({ settings, locale }: { settings: SiteSettings | null; locale: Locale }) {
+/**
+ * `anchorTersedia` berisi anchor section yang BENAR-BENAR dirender halaman ini.
+ *
+ * Tanpa ini Nav menautkan kelima anchor tanpa syarat, sementara setiap section
+ * menyembunyikan diri bila datanya kosong (kontrak lama di
+ * `components/sections/`). Begitu studi kasus tak ada yang diterbitkan, tautan
+ * "Studi Kasus" tetap tampil dan mengarah ke `#studi-kasus` yang tidak ada:
+ * diklik, halaman tidak bergerak sama sekali. Persis kegagalan yang ditangkap
+ * degradasi.spec.ts — dan test itu benar; yang salah navigasinya.
+ *
+ * Daftarnya dihitung pemanggil (KomposisiHalaman) dari data yang sama yang
+ * dipakai merender section-nya, jadi keduanya tidak bisa menyimpang.
+ */
+export function Nav({
+  settings,
+  locale,
+  anchorTersedia,
+}: {
+  settings: SiteSettings | null
+  locale: Locale
+  anchorTersedia: readonly string[]
+}) {
+  const tautan = TAUTAN.filter((t) => anchorTersedia.includes(t.anchor))
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
-      <Wrap className="flex h-[72px] items-center justify-between">
-        <span className="font-mono text-[15px] font-semibold">
-          QA<span className="text-pass">_</span>portfolio
-        </span>
+      {/* Tanpa wordmark di kiri atas.
+          "QA_portfolio" sebelumnya ditulis keras di sini — bukan dari database
+          — dan menamai KATEGORI situsnya, bukan pemiliknya. Di halaman yang
+          seluruh isinya sudah menyebut nama dan perannya, label itu tidak
+          menambah keterangan apa pun.
 
+          `justify-between` tetap dipakai: dengan tiga anak menjadi dua, tautan
+          navigasi jatuh ke kiri dan kelompok status+bahasa tetap di kanan. */}
+      <Wrap className="flex h-[72px] items-center justify-between">
         <nav className="hidden gap-7 text-sm text-ink-soft md:flex">
-          {TAUTAN.map((t) => (
+          {tautan.map((t) => (
             <a key={t.anchor} href={`#${t.anchor}`} className="hover:text-primary">
               {t.label[locale]}
             </a>

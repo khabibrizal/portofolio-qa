@@ -70,21 +70,39 @@ test.describe('Automation Lab — replay interaktif', () => {
 })
 
 test.describe('Automation Lab — perpindahan tab', () => {
-  test('berpindah tab menampilkan skenario lain, bukan skenario yang sama', async ({ page }) => {
+  test('berpindah tab menampilkan skenario lain, bukan skenario yang sama', async ({
+    page,
+    request,
+  }) => {
+    // Nama tab dan judul skenario DIBACA DARI DATABASE.
+    //
+    // Versi sebelumnya menulis keras `name: 'k6'` dan judul 'Uji Beban Endpoint
+    // Pencarian'. Ketika skenario k6 — yang isinya contoh, lengkap dengan URL
+    // report example.com — tidak lagi diterbitkan, tabnya hilang dan test ini
+    // menggantung 30 detik lalu mati dengan "locator.click: Test timeout".
+    // Pesan itu menyesatkan: ia terbaca seperti elemen yang tertutup sesuatu,
+    // padahal elemennya tidak ada sama sekali.
+    const skenario = await skenarioLab(request)
+    test.skip(
+      skenario.length < 2,
+      'perlu minimal dua skenario published untuk menguji perpindahan tab',
+    )
+
+    const [pertama, kedua] = skenario
     await page.goto('/id')
 
     const lab = page.locator('#automation-lab')
-    const tabPlaywright = lab.getByRole('tab', { name: 'Playwright' })
-    const tabK6 = lab.getByRole('tab', { name: 'k6' })
+    const tabPertama = lab.getByRole('tab', { name: pertama.framework_name }).first()
+    const tabKedua = lab.getByRole('tab', { name: kedua.framework_name }).first()
 
-    await expect(tabPlaywright).toHaveAttribute('aria-selected', 'true')
-    await expect(lab.getByRole('tabpanel')).toContainText('Login & Checkout End-to-End')
+    await expect(tabPertama).toHaveAttribute('aria-selected', 'true')
+    await expect(lab.getByRole('tabpanel')).toContainText(pertama.scenario_title.id)
 
-    await tabK6.click()
-    await expect(tabK6).toHaveAttribute('aria-selected', 'true')
-    await expect(tabPlaywright).toHaveAttribute('aria-selected', 'false')
-    await expect(lab.getByRole('tabpanel')).toContainText('Uji Beban Endpoint Pencarian')
-    await expect(lab.getByRole('tabpanel')).not.toContainText('Login & Checkout End-to-End')
+    await tabKedua.click()
+    await expect(tabKedua).toHaveAttribute('aria-selected', 'true')
+    await expect(tabPertama).toHaveAttribute('aria-selected', 'false')
+    await expect(lab.getByRole('tabpanel')).toContainText(kedua.scenario_title.id)
+    await expect(lab.getByRole('tabpanel')).not.toContainText(pertama.scenario_title.id)
   })
 
   test('tautan hanya muncul untuk URL yang benar-benar ada di database', async ({
@@ -128,6 +146,10 @@ test.describe('Automation Lab — perpindahan tab', () => {
     request,
   }) => {
     const skenario = await skenarioLab(request)
+    test.skip(
+      skenario.length < 2,
+      'perlu minimal dua skenario published untuk berpindah tab di tengah replay',
+    )
     const durasiPertama = skenario[0]?.result_summary?.duration ?? ''
     const errorKonsol: string[] = []
     page.on('pageerror', (e) => errorKonsol.push(e.message))
@@ -139,7 +161,7 @@ test.describe('Automation Lab — perpindahan tab', () => {
 
     // Mulai replay lalu pindah tab SEBELUM selesai (total langkah 850+600ms).
     await panel.getByRole('button').click()
-    await lab.getByRole('tab', { name: 'k6' }).click()
+    await lab.getByRole('tab', { name: skenario[1].framework_name }).first().click()
 
     // Skenario kedua harus tampil dalam keadaan idle — bukan mewarisi keadaan
     // "berjalan" dari skenario yang ditinggalkan.
@@ -155,7 +177,7 @@ test.describe('Automation Lab — perpindahan tab', () => {
     // dibuktikan lewat mutasi.
     await page.waitForTimeout(2_500)
 
-    await lab.getByRole('tab', { name: 'Playwright' }).click()
+    await lab.getByRole('tab', { name: skenario[0].framework_name }).first().click()
 
     // Skenario pertama harus tetap idle: tidak pernah lanjut sendiri, dan
     // report-nya tidak boleh muncul tanpa ada yang menekan tombolnya.
@@ -171,10 +193,14 @@ test.describe('Automation Lab — perpindahan tab', () => {
 test.describe('Automation Lab — aksesibilitas dasar', () => {
   test('tab Lab bisa dijangkau via Tab dan diaktifkan via Enter/Space, bukan hanya klik mouse', async ({
     page,
+    request,
   }) => {
+    const skenario = await skenarioLab(request)
+    test.skip(skenario.length === 0, 'belum ada skenario lab published')
+
     await page.goto('/id')
 
-    const tab = page.getByRole('tab', { name: 'Playwright' })
+    const tab = page.getByRole('tab', { name: skenario[0].framework_name }).first()
 
     // Susuri urutan fokus sungguhan lewat tombol Tab sampai mengenai tab Lab
     // — bukan locator.focus(), yang melompati urutan tabindex asli halaman.

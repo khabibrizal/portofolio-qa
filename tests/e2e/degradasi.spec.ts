@@ -2,11 +2,6 @@ import { expect, test } from '@playwright/test'
 
 const LOCALES = ['id', 'en'] as const
 
-// Anchor yang ditautkan Nav — lihat src/components/layout/Nav.tsx (`TAUTAN`).
-// Kalau salah satu section berhenti merender id-nya (mis. salah rename saat
-// refactor), tautan Nav menunjuk ke tempat yang tidak ada — kerusakan yang
-// tidak pernah error, cuma diam-diam tidak bisa diklik.
-const ANCHOR_NAV = ['tentang', 'coverage', 'studi-kasus', 'automation-lab', 'pengalaman'] as const
 
 for (const locale of LOCALES) {
   test(`/${locale}: halaman merender <main> dan <footer>`, async ({ page }) => {
@@ -41,10 +36,27 @@ for (const locale of LOCALES) {
   }) => {
     await page.goto(`/${locale}`)
 
-    for (const anchor of ANCHOR_NAV) {
+    // Daftar anchor DIBACA DARI NAV YANG DIRENDER, bukan disalin sebagai
+    // konstanta di berkas ini.
+    //
+    // Versi sebelumnya menyalin kelima anchor dari Nav.tsx. Salinan itu benar
+    // sampai Nav mulai menyaring tautannya menurut section yang benar-benar
+    // ada — sejak itu ia menuntut anchor untuk section yang sengaja tidak
+    // dirender, dan gagal atas keadaan yang justru diinginkan.
+    //
+    // Yang dijaga tetap sama dan tetap penting: setiap tautan yang BENAR-BENAR
+    // ditawarkan Nav harus punya tujuan. Tautan yang menunjuk ke id yang tiada
+    // tidak pernah melempar error — ia hanya diam-diam tidak bisa diklik.
+    const anchor = await page
+      .locator('header a[href^="#"]')
+      .evaluateAll((el) => el.map((a) => a.getAttribute('href')!.slice(1)))
+
+    expect(anchor.length, 'Nav tidak menawarkan satu pun tautan anchor').toBeGreaterThan(0)
+
+    for (const a of anchor) {
       await expect(
-        page.locator(`#${anchor}`),
-        `anchor #${anchor} yang ditautkan Nav tidak ditemukan di halaman`,
+        page.locator(`#${a}`),
+        `Nav menautkan #${a}, tapi tidak ada elemen dengan id itu di halaman`,
       ).toHaveCount(1)
     }
   })
